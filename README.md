@@ -24,7 +24,7 @@
 ## 🛠️ How to Run This App
 This is a **Zero-Install** project. Because it is built as a single-file web app, you can run it anywhere:
 
-1. **On the Web:** [CLICK HERE TO OPEN THE LIVE APP](https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/)
+1. **On the Web:** [CLICK HERE TO OPEN THE LIVE APP](https://catherine-fu88.github.io/cook-and-grow-together/)
 2. **Locally:** - Download the `index.html` file.
    - Double-click it to open in any modern web browser (Chrome, Safari, Firefox).
 
