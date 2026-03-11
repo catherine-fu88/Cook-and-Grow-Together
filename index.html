@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cook Together, Grow Together 🌿</title>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+:root {
+  --sage:#B2AC88; --sage-light:#D4D0B5; --sage-dark:#8A8668;
+  --apricot:#FFB380; --apricot-light:#FFD4B8; --apricot-dark:#E8924A;
+  --cream:#FFFDD0; --cream-dark:#F0EDD8;
+  --brown:#7A5C3A;
+  --white:#FFFFFF;
+  --r:24px; --rs:14px;
+  --shadow:0 8px 32px rgba(122,92,58,.13);
+  --shadow-lg:0 16px 48px rgba(122,92,58,.18);
+  --bounce:cubic-bezier(.34,1.56,.64,1);
+  --smooth:cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Quicksand',sans-serif;background:#e8e4d0;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+
+#app{width:768px;height:1024px;background:var(--cream);border-radius:32px;box-shadow:var(--shadow-lg);overflow:clip;position:relative;border:3px solid var(--sage-light);}
+.bg-blob{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.bg-blob::before{content:'';position:absolute;width:420px;height:420px;background:radial-gradient(circle,rgba(178,172,136,.16) 0%,transparent 70%);top:-100px;right:-80px;border-radius:50%;}
+.bg-blob::after{content:'';position:absolute;width:320px;height:320px;background:radial-gradient(circle,rgba(255,179,128,.13) 0%,transparent 70%);bottom:-60px;left:-60px;border-radius:50%;}
+
+/* screens */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;padding:28px;z-index:1;opacity:0;transform:scale(.96) translateY(14px);pointer-events:none;transition:opacity .35s var(--smooth),transform .35s var(--bounce);}
+.screen.active{opacity:1;transform:scale(1) translateY(0);pointer-events:all;z-index:10;}
+.screen.exit{opacity:0;transform:scale(.96) translateY(-14px);pointer-events:none;z-index:5;}
+
+/* nav */
+.nav-bar{position:absolute;top:20px;left:20px;right:20px;display:flex;justify-content:space-between;z-index:99;pointer-events:none;opacity:0;transition:opacity .3s;}
+.nav-bar.visible{pointer-events:all;opacity:1;}
+.nav-btn{background:var(--white);border:2px solid var(--sage-light);border-radius:50px;padding:10px 18px;font-family:'Quicksand',sans-serif;font-weight:700;font-size:14px;color:var(--brown);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .25s var(--bounce);box-shadow:0 4px 12px rgba(122,92,58,.1);}
+.nav-btn:hover{transform:scale(1.06);}
+
+/* typography */
+.screen-title{font-size:26px;font-weight:800;color:var(--brown);text-align:center;margin-bottom:4px;}
+.screen-sub{font-size:14px;color:var(--sage-dark);text-align:center;margin-bottom:12px;}
+.sec-label{font-size:12px;font-weight:700;color:var(--sage-dark);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;}
+
+/* buttons */
+.btn-primary{background:linear-gradient(135deg,var(--apricot),var(--apricot-dark));color:var(--white);border:none;border-radius:50px;padding:17px 36px;font-family:'Quicksand',sans-serif;font-weight:800;font-size:17px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .28s var(--bounce);box-shadow:0 8px 24px rgba(255,179,128,.45);width:100%;justify-content:center;}
+.btn-primary:hover{transform:translateY(-3px) scale(1.02);}
+.btn-primary:active{transform:scale(.97);}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+.btn-sage{background:linear-gradient(135deg,var(--sage-light),var(--sage));color:var(--white);border:none;border-radius:50px;padding:14px 24px;font-family:'Quicksand',sans-serif;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .25s var(--bounce);box-shadow:0 6px 18px rgba(178,172,136,.4);justify-content:center;}
+.btn-sage:hover{transform:scale(1.04);}
+.btn-ghost{background:var(--white);border:2.5px solid var(--sage-light);border-radius:50px;padding:13px 20px;font-family:'Quicksand',sans-serif;font-weight:700;font-size:14px;color:var(--brown);cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .25s var(--bounce);box-shadow:0 3px 10px rgba(122,92,58,.08);justify-content:center;}
+.btn-ghost:hover{transform:scale(1.03);}
+
+/* ─── WELCOME ─── */
+#screen-welcome{align-items:center;justify-content:center;background:linear-gradient(160deg,var(--cream) 0%,#F2EFCC 100%);}
+.w-emoji{font-size:76px;display:block;margin-bottom:10px;animation:wobble 3s ease-in-out infinite;}
+@keyframes wobble{0%,100%{transform:rotate(-4deg) scale(1);}50%{transform:rotate(4deg) scale(1.05);}}
+.w-title{font-size:34px;font-weight:800;color:var(--brown);line-height:1.2;margin-bottom:6px;text-align:center;}
+.w-sub{font-size:15px;color:var(--sage-dark);text-align:center;margin-bottom:28px;}
+@keyframes floatUp{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
+.fa{animation:floatUp .55s var(--bounce) both;}
+.fa2{animation-delay:.1s;} .fa3{animation-delay:.2s;} .fa4{animation-delay:.3s;}
+.role-row{display:flex;gap:14px;width:100%;margin-bottom:22px;}
+.role-card{flex:1;background:var(--white);border:3px solid var(--sage-light);border-radius:var(--r);padding:18px 14px;cursor:pointer;text-align:center;transition:all .28s var(--bounce);box-shadow:0 4px 14px rgba(122,92,58,.08);}
+.role-card:hover{transform:translateY(-4px) scale(1.03);}
+.role-card.selected{border-color:var(--apricot-dark);background:linear-gradient(135deg,#FFF8F3,#FFE8D6);transform:translateY(-4px) scale(1.04);box-shadow:0 8px 28px rgba(255,179,128,.35);}
+.role-emoji{font-size:42px;display:block;margin-bottom:6px;}
+.role-name{font-size:15px;font-weight:700;color:var(--brown);}
+.role-desc{font-size:11px;color:var(--sage-dark);margin-top:3px;}
+.lang-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;width:100%;margin-bottom:24px;}
+.lang-card{background:var(--white);border:2.5px solid var(--sage-light);border-radius:var(--rs);padding:13px 10px;cursor:pointer;text-align:center;transition:all .25s var(--bounce);box-shadow:0 3px 10px rgba(122,92,58,.07);}
+.lang-card:hover{transform:scale(1.04);}
+.lang-card.selected{border-color:var(--sage);background:linear-gradient(135deg,#F0EFE5,#E5E2C8);box-shadow:0 6px 20px rgba(178,172,136,.35);}
+.lang-flag{font-size:26px;display:block;margin-bottom:3px;}
+.lang-name{font-size:13px;font-weight:700;color:var(--brown);}
+.lang-native{font-size:11px;color:var(--sage-dark);}
+
+/* ─── SCANNER ─── */
+#screen-scanner{padding-top:72px;gap:14px;overflow-y:auto;}
+.camera-wrap{position:relative;border-radius:var(--r);overflow:hidden;background:#1a1a1a;flex-shrink:0;height:300px;box-shadow:var(--shadow-lg);}
+#cam-video{width:100%;height:100%;object-fit:cover;display:block;}
+.cam-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;background:linear-gradient(135deg,#2a2a2a,#1a1a1a);}
+.cam-ph-icon{color:rgba(255,255,255,.55);}
+.cam-ph-txt{color:rgba(255,255,255,.75);font-size:15px;font-weight:700;}
+.cam-ph-sub{color:rgba(255,255,255,.45);font-size:12px;}
+.cam-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+.scan-frame{width:200px;height:200px;border:3px solid var(--apricot);border-radius:20px;position:relative;box-shadow:0 0 0 4000px rgba(0,0,0,.35);}
+.scan-frame::before,.scan-frame::after{content:'';position:absolute;width:28px;height:28px;border-color:var(--white);border-style:solid;}
+.scan-frame::before{top:-3px;left:-3px;border-width:4px 0 0 4px;border-radius:6px 0 0 0;}
+.scan-frame::after{bottom:-3px;right:-3px;border-width:0 4px 4px 0;border-radius:0 0 6px 0;}
+.scan-line{position:absolute;left:6px;right:6px;height:2.5px;background:linear-gradient(90deg,transparent,var(--apricot),transparent);border-radius:2px;animation:scanMove 2s linear infinite;}
+@keyframes scanMove{0%{top:10%;}100%{top:88%;}}
+.scan-status{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);backdrop-filter:blur(6px);border-radius:50px;padding:7px 18px;color:var(--white);font-size:13px;font-weight:700;white-space:nowrap;}
+.id-card{background:var(--white);border:2.5px solid var(--sage-light);border-radius:var(--r);padding:16px 18px;display:none;align-items:center;gap:14px;box-shadow:var(--shadow);flex-shrink:0;}
+.id-card.show{display:flex;animation:popIn .4s var(--bounce);}
+@keyframes popIn{from{transform:scale(.82);opacity:0;}to{transform:scale(1);opacity:1;}}
+.id-big{font-size:46px;line-height:1;}
+.id-info{flex:1;}
+.id-name-txt{font-size:20px;font-weight:800;color:var(--brown);}
+.id-conf-txt{font-size:12px;color:var(--sage-dark);margin-top:2px;}
+.id-btns{display:flex;gap:8px;flex-shrink:0;}
+.btn-yes{background:linear-gradient(135deg,#7EC87E,#5A9E5A);color:var(--white);border:none;border-radius:50px;padding:11px 20px;font-family:'Quicksand',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .25s var(--bounce);}
+.btn-yes:hover{transform:scale(1.06);}
+.btn-retry{background:var(--cream-dark);color:var(--brown);border:2px solid var(--sage-light);border-radius:50px;padding:11px 16px;font-family:'Quicksand',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .25s var(--bounce);}
+.btn-retry:hover{transform:scale(1.06);}
+.cam-controls{display:flex;gap:10px;flex-shrink:0;}
+.quick-row{display:flex;flex-wrap:wrap;gap:8px;}
+.qp-chip{background:var(--white);border:2px solid var(--sage-light);border-radius:var(--rs);padding:9px 13px;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:var(--brown);transition:all .22s var(--bounce);box-shadow:0 2px 8px rgba(122,92,58,.07);}
+.qp-chip:hover{transform:scale(1.07);border-color:var(--apricot);}
+
+/* ─── OVERVIEW ─── */
+#screen-overview{padding-top:72px;gap:14px;overflow-y:auto;}
+#screen-overview::-webkit-scrollbar,#screen-scanner::-webkit-scrollbar,#screen-explore::-webkit-scrollbar,#screen-kitchen::-webkit-scrollbar{width:5px;}
+#screen-overview::-webkit-scrollbar-thumb,#screen-scanner::-webkit-scrollbar-thumb,#screen-explore::-webkit-scrollbar-thumb,#screen-kitchen::-webkit-scrollbar-thumb{background:var(--sage-light);border-radius:3px;}
+.ov-hero{background:var(--white);border-radius:var(--r);padding:20px 22px;display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);border:2px solid var(--sage-light);flex-shrink:0;}
+.ov-emoji{font-size:64px;line-height:1;}
+.ov-name{font-size:26px;font-weight:800;color:var(--brown);}
+.ov-tagline{font-size:13px;color:var(--sage-dark);margin-top:3px;line-height:1.5;}
+.ov-card{background:var(--white);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);border:2px solid var(--sage-light);}
+.ov-card-title{font-size:14px;font-weight:800;color:var(--brown);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.ov-bullets{display:flex;flex-direction:column;gap:9px;}
+.ov-bullet{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--brown);line-height:1.55;font-weight:500;}
+.ov-dot{width:8px;height:8px;border-radius:50%;background:var(--apricot);flex-shrink:0;margin-top:6px;}
+.n-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.n-chip{background:linear-gradient(135deg,var(--apricot-light),var(--apricot));border-radius:50px;padding:6px 14px;font-size:13px;font-weight:700;color:var(--brown);}
+.ov-footer{display:flex;gap:10px;flex-shrink:0;padding-bottom:6px;}
+
+/* ─── EXPLORE ─── */
+#screen-explore{padding-top:72px;gap:12px;overflow-y:auto;}
+.recipe-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:12px;}
+.recipe-grid::-webkit-scrollbar{width:5px;}
+.recipe-grid::-webkit-scrollbar-thumb{background:var(--sage-light);border-radius:3px;}
+.recipe-card{background:var(--white);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);border:2px solid var(--sage-light);cursor:pointer;transition:all .28s var(--bounce);display:flex;flex-direction:column;}
+.recipe-card:hover{transform:translateY(-5px) scale(1.02);box-shadow:var(--shadow-lg);}
+.rc-img{width:100%;height:130px;object-fit:cover;display:block;}
+.rc-placeholder{width:100%;height:130px;display:flex;align-items:center;justify-content:center;font-size:50px;background:linear-gradient(135deg,var(--cream-dark),var(--sage-light));}
+.rc-body{padding:14px;}
+.rc-meal{font-size:10px;font-weight:700;color:var(--apricot-dark);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+.rc-name{font-size:15px;font-weight:800;color:var(--brown);line-height:1.3;margin-bottom:5px;}
+.rc-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.rc-tag{background:var(--cream-dark);border-radius:50px;padding:3px 9px;font-size:10px;font-weight:700;color:var(--brown);}
+
+/* ─── KITCHEN ─── */
+#screen-kitchen{padding-top:70px;gap:10px;overflow-y:auto;}
+.k-hdr{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.k-ing-em{font-size:38px;}
+.k-ttl{font-size:20px;font-weight:800;color:var(--brown);}
+.k-sub-ttl{font-size:13px;color:var(--sage-dark);}
+.k-badge{background:var(--apricot-light);border-radius:50px;padding:6px 14px;font-size:13px;font-weight:700;color:var(--apricot-dark);flex-shrink:0;}
+.prog-wrap{background:var(--sage-light);border-radius:50px;height:7px;flex-shrink:0;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--apricot),var(--apricot-dark));border-radius:50px;transition:width .55s var(--smooth);}
+.k-split{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.k-parent,.k-chef{border-radius:var(--r);padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px;}
+.k-parent::-webkit-scrollbar,.k-chef::-webkit-scrollbar{width:4px;}
+.k-parent::-webkit-scrollbar-thumb,.k-chef::-webkit-scrollbar-thumb{background:var(--sage-light);border-radius:3px;}
+.k-parent{background:var(--white);border:2.5px solid var(--sage-light);}
+.k-chef{background:linear-gradient(160deg,#FFFAF5,#FFF5EC);border:2.5px solid var(--apricot-light);}
+.side-hdr{display:flex;align-items:center;gap:8px;padding-bottom:8px;border-bottom:2px solid var(--cream-dark);flex-shrink:0;}
+.side-av{font-size:24px;}
+.side-ttl{font-size:14px;font-weight:800;color:var(--brown);}
+.side-role{font-size:10px;color:var(--sage-dark);}
+.p-step-num{font-size:10px;font-weight:700;color:var(--sage-dark);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;}
+.p-step-box{font-size:13px;font-weight:600;color:var(--brown);line-height:1.55;background:var(--cream);border-radius:var(--rs);padding:12px;border-left:4px solid var(--sage);}
+.safety-badge{border-radius:50px;padding:6px 12px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px;flex-shrink:0;width:fit-content;}
+.sb-red{background:#FFD0D0;color:#C0392B;}
+.sb-amber{background:#FFE5B4;color:#8B5E00;}
+.sb-green{background:#D4EDDA;color:#2E7D32;}
+.p-nutr{background:var(--cream);border-radius:var(--rs);padding:10px 12px;font-size:11px;color:var(--sage-dark);line-height:1.55;flex-shrink:0;}
+.mission-card{background:linear-gradient(135deg,#FFF5EE,#FFE8D6);border-radius:var(--rs);padding:13px;border:2px solid var(--apricot-light);cursor:pointer;transition:all .25s var(--bounce);flex-shrink:0;}
+.mission-card:hover{transform:scale(1.02);}
+.mission-card.done{background:linear-gradient(135deg,#F0FFF4,#C8E6C9);border-color:#7EC87E;}
+.m-title-row{display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:var(--brown);margin-bottom:3px;}
+.m-txt{font-size:12px;color:var(--brown);line-height:1.45;}
+.word-pill{border-radius:50px;padding:8px 14px;display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.wp-ing{background:linear-gradient(135deg,var(--sage-light),var(--sage));}
+.wp-verb{background:linear-gradient(135deg,var(--apricot-light),var(--apricot));}
+.w-en{font-size:10px;font-weight:600;color:rgba(255,255,255,.75);}
+.w-py{font-size:10px;color:rgba(255,255,255,.9);font-style:italic;}
+.w-tgt{font-size:17px;font-weight:800;color:var(--white);}
+.wp-verb .w-tgt{color:var(--brown);}
+.wp-verb .w-en{color:rgba(122,92,58,.7);}
+.wp-verb .w-py{color:var(--brown);}
+.k-nav{display:flex;gap:10px;flex-shrink:0;}
+.btn-prev{flex:1;background:var(--white);border:2.5px solid var(--sage-light);border-radius:50px;padding:13px;font-family:'Quicksand',sans-serif;font-weight:700;font-size:14px;color:var(--brown);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .25s var(--bounce);box-shadow:0 3px 10px rgba(122,92,58,.08);}
+.btn-prev:hover{transform:scale(1.03);}
+.btn-prev:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+.btn-next{flex:2;background:linear-gradient(135deg,var(--apricot),var(--apricot-dark));color:var(--white);border:none;border-radius:50px;padding:13px;font-family:'Quicksand',sans-serif;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .25s var(--bounce);box-shadow:0 6px 20px rgba(255,179,128,.4);}
+.btn-next:hover{transform:scale(1.03);}
+
+/* ─── COMPLETE ─── */
+#screen-complete{align-items:center;justify-content:center;gap:18px;text-align:center;background:linear-gradient(160deg,var(--cream) 0%,#F0EDD8 100%);}
+.comp-em{font-size:80px;animation:jumpB 1s var(--bounce) infinite alternate;}
+@keyframes jumpB{from{transform:translateY(0) scale(1);}to{transform:translateY(-14px) scale(1.05);}}
+.comp-title{font-size:30px;font-weight:800;color:var(--brown);}
+.comp-sub{font-size:15px;color:var(--sage-dark);max-width:400px;line-height:1.65;}
+.comp-words{background:var(--white);border-radius:var(--r);padding:20px 22px;width:100%;max-width:500px;box-shadow:var(--shadow);border:2px solid var(--sage-light);}
+.cw-title{font-size:12px;font-weight:700;color:var(--sage-dark);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;}
+.word-badges{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+.wb{background:linear-gradient(135deg,var(--apricot-light),var(--apricot));border-radius:50px;padding:8px 16px;font-size:14px;font-weight:700;color:var(--brown);}
+
+/* ─── POPUP ─── */
+.popup-ov{position:absolute;inset:0;background:rgba(122,92,58,.28);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .3s var(--smooth);}
+.popup-ov.show{opacity:1;pointer-events:all;}
+.popup-card{background:var(--white);border-radius:var(--r);padding:34px 38px;text-align:center;max-width:380px;box-shadow:var(--shadow-lg);transform:scale(.7) rotate(-3deg);transition:transform .4s var(--bounce);border:3px solid var(--apricot-light);}
+.popup-ov.show .popup-card{transform:scale(1) rotate(0);}
+.p-stars{font-size:38px;margin-bottom:8px;}
+.p-title{font-size:22px;font-weight:800;color:var(--brown);margin-bottom:7px;}
+.p-body{font-size:14px;color:var(--sage-dark);line-height:1.5;margin-bottom:10px;}
+.p-word-box{background:linear-gradient(135deg,var(--apricot-light),var(--apricot));border-radius:var(--rs);padding:12px 20px;margin:10px 0;display:inline-block;}
+.pw-py{font-size:10px;color:var(--brown);font-style:italic;opacity:.8;margin-bottom:2px;}
+.pw-main{font-size:24px;font-weight:800;color:var(--brown);}
+.pw-lang{font-size:12px;color:var(--brown);opacity:.7;margin-top:2px;}
+.btn-popup{margin-top:14px;background:linear-gradient(135deg,var(--apricot),var(--apricot-dark));color:var(--white);border:none;border-radius:50px;padding:14px 30px;font-family:'Quicksand',sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:all .25s var(--bounce);box-shadow:0 6px 20px rgba(255,179,128,.4);}
+.btn-popup:hover{transform:scale(1.05);}
+
+/* confetti */
+.cf-holder{position:absolute;inset:0;pointer-events:none;z-index:201;}
+.cp{position:absolute;border-radius:3px;animation:cfFall 1.6s ease-in forwards;}
+@keyframes cfFall{0%{transform:translateY(-20px) rotate(0);opacity:1;}100%{transform:translateY(440px) rotate(720deg);opacity:0;}}
+
+@media(max-width:800px){body{align-items:flex-start;}#app{width:100vw;height:100vh;border-radius:0;border:none;}}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="bg-blob"></div>
+
+<!-- NAV -->
+<div class="nav-bar" id="nav-bar">
+  <button class="nav-btn" onclick="goBack()"><i data-lucide="chevron-left" style="width:16px;height:16px"></i> Back</button>
+  <button class="nav-btn" onclick="goHome()"><i data-lucide="home" style="width:16px;height:16px"></i> Home</button>
+</div>
+
+<!-- ════ WELCOME ════ -->
+<div class="screen active" id="screen-welcome">
+  <div class="fa" style="text-align:center;margin-bottom:24px;">
+    <span class="w-emoji">🌿</span>
+    <h1 class="w-title">Cook Together,<br>Grow Together</h1>
+    <p class="w-sub">A kitchen adventure for families 🍅</p>
+  </div>
+  <p class="sec-label fa fa2" style="text-align:center">Who's in the kitchen?</p>
+  <div class="role-row fa fa2">
+    <div class="role-card" id="role-parent" onclick="selectRole('parent')">
+      <span class="role-emoji">👨‍🍳</span>
+      <div class="role-name">Parent</div><div class="role-desc">Guide & cook</div>
+    </div>
+    <div class="role-card" id="role-child" onclick="selectRole('child')">
+      <span class="role-emoji">🧒</span>
+      <div class="role-name">Little Chef</div><div class="role-desc">Learn & explore</div>
+    </div>
+  </div>
+  <p class="sec-label fa fa3" style="text-align:center">Choose a learning language</p>
+  <div class="lang-grid fa fa3">
+    <div class="lang-card" id="lang-en"  onclick="selectLang('en')"><span class="lang-flag">🇺🇸</span><div class="lang-name">English</div><div class="lang-native">English</div></div>
+    <div class="lang-card" id="lang-es"  onclick="selectLang('es')"><span class="lang-flag">🇪🇸</span><div class="lang-name">Spanish</div><div class="lang-native">Español</div></div>
+    <div class="lang-card" id="lang-zhs" onclick="selectLang('zhs')"><span class="lang-flag">🇨🇳</span><div class="lang-name">Simplified Chinese</div><div class="lang-native">简体中文</div></div>
+    <div class="lang-card" id="lang-zht" onclick="selectLang('zht')"><span class="lang-flag">🇹🇼</span><div class="lang-name">Traditional Chinese</div><div class="lang-native">繁體中文</div></div>
+  </div>
+  <button class="btn-primary fa fa4" id="btn-start" onclick="goToScanner()" disabled>
+    <i data-lucide="chef-hat" style="width:22px;height:22px"></i> Start Cooking!
+  </button>
+</div>
+
+<!-- ════ SCANNER ════ -->
+<div class="screen" id="screen-scanner">
+  <h2 class="screen-title">Scan Your Ingredient</h2>
+  <p class="screen-sub">Point the camera at one fruit or vegetable</p>
+
+  <div class="camera-wrap">
+    <video id="cam-video" autoplay playsinline muted></video>
+    <div class="cam-ph" id="cam-ph" onclick="requestCamera()">
+      <i data-lucide="camera" style="width:52px;height:52px" class="cam-ph-icon"></i>
+      <div class="cam-ph-txt">Tap to enable camera</div>
+      <div class="cam-ph-sub">We'll scan for one food item at a time</div>
+    </div>
+    <div class="cam-overlay" id="cam-overlay" style="display:none">
+      <div class="scan-frame"><div class="scan-line"></div></div>
+    </div>
+    <div class="scan-status" id="scan-status" style="display:none">Scanning…</div>
+  </div>
+
+  <div class="id-card" id="id-card">
+    <div class="id-big" id="id-emoji">🍅</div>
+    <div class="id-info">
+      <div class="id-name-txt" id="id-name">Tomato</div>
+      <div class="id-conf-txt" id="id-conf">94% confidence</div>
+    </div>
+    <div class="id-btns">
+      <button class="btn-yes" onclick="confirmIngredient()">✓ Yes!</button>
+      <button class="btn-retry" onclick="retryScan()">↺ Retry</button>
+    </div>
+  </div>
+
+  <div class="cam-controls" id="cam-controls" style="display:none">
+    <button class="btn-sage" style="flex:1" onclick="triggerScan()">
+      <i data-lucide="scan-line" style="width:18px;height:18px"></i> Scan Item
+    </button>
+    <button class="btn-ghost" onclick="stopCamera()">
+      <i data-lucide="camera-off" style="width:16px;height:16px"></i>
+    </button>
+  </div>
+
+  <div>
+    <p class="sec-label">Or pick manually</p>
+    <div class="quick-row" id="quick-picks"></div>
+  </div>
+</div>
+
+<!-- ════ OVERVIEW ════ -->
+<div class="screen" id="screen-overview">
+  <div class="ov-hero">
+    <div class="ov-emoji" id="ov-emoji">🍅</div>
+    <div>
+      <div class="ov-name" id="ov-name">Tomato</div>
+      <div class="ov-tagline" id="ov-tagline">Great for little chefs!</div>
+    </div>
+  </div>
+  <div class="ov-card">
+    <div class="ov-card-title">🌟 Why it's great for kids</div>
+    <div class="ov-bullets" id="ov-bullets"></div>
+  </div>
+  <div class="ov-card">
+    <div class="ov-card-title">💊 Key nutrients</div>
+    <div class="n-chips" id="ov-nutrients"></div>
+  </div>
+  <div class="ov-footer">
+    <button class="btn-ghost" style="flex:1" onclick="showScreen('scanner')">
+      <i data-lucide="arrow-left" style="width:15px;height:15px"></i> Change
+    </button>
+    <button class="btn-primary" style="flex:2" onclick="showScreen('explore')">
+      See Recipes <i data-lucide="arrow-right" style="width:18px;height:18px"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ════ EXPLORE ════ -->
+<div class="screen" id="screen-explore">
+  <h2 class="screen-title">Pick a Recipe</h2>
+  <p class="screen-sub" id="explore-sub">Choose how you'd like to cook today</p>
+  <div class="recipe-grid" id="recipe-grid"></div>
+</div>
+
+<!-- ════ KITCHEN ════ -->
+<div class="screen" id="screen-kitchen">
+  <div class="k-hdr">
+    <div class="k-ing-em" id="k-emoji">🍅</div>
+    <div style="flex:1">
+      <div class="k-ttl" id="k-title">Recipe</div>
+      <div class="k-sub-ttl">Step <span id="k-step-n">1</span> of <span id="k-total">4</span></div>
+    </div>
+    <div class="k-badge" id="k-badge">Step 1</div>
+  </div>
+  <div class="prog-wrap"><div class="prog-fill" id="k-prog" style="width:25%"></div></div>
+
+  <div class="k-split">
+    <div class="k-parent">
+      <div class="side-hdr">
+        <div class="side-av">👨‍🍳</div>
+        <div><div class="side-ttl">Parent Guide</div><div class="side-role">Step-by-step</div></div>
+      </div>
+      <div>
+        <div class="p-step-num" id="p-lbl">Step 1</div>
+        <div class="p-step-box" id="p-text">Loading…</div>
+      </div>
+      <div class="safety-badge sb-amber" id="p-safety">
+        <i data-lucide="shield" style="width:12px;height:12px"></i>
+        <span id="p-safety-txt">Supervised</span>
+      </div>
+      <div class="p-nutr" id="p-nutr"></div>
+    </div>
+
+    <div class="k-chef">
+      <div class="side-hdr">
+        <div class="side-av">🧒</div>
+        <div><div class="side-ttl">Little Chef!</div><div class="side-role">Your mission 🎯</div></div>
+      </div>
+      <div class="mission-card" id="mission-card" onclick="completeMission()">
+        <div class="m-title-row"><span id="m-title">Mission</span><span id="m-check">⬜</span></div>
+        <div class="m-txt" id="m-txt">Loading…</div>
+      </div>
+      <div class="word-pill wp-ing">
+        <div class="w-en" id="wp-en-i"></div>
+        <div class="w-py" id="wp-py-i" style="display:none"></div>
+        <div class="w-tgt" id="wp-tgt-i"></div>
+      </div>
+      <div class="word-pill wp-verb">
+        <div class="w-en" id="wp-en-v"></div>
+        <div class="w-py" id="wp-py-v" style="display:none"></div>
+        <div class="w-tgt" id="wp-tgt-v"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="k-nav">
+    <button class="btn-prev" id="btn-k-prev" onclick="prevKStep()"><i data-lucide="chevron-left" style="width:17px;height:17px"></i> Back</button>
+    <button class="btn-next" id="btn-k-next" onclick="nextKStep()">Next Step <i data-lucide="chevron-right" style="width:17px;height:17px"></i></button>
+  </div>
+</div>
+
+<!-- ════ COMPLETE ════ -->
+<div class="screen" id="screen-complete">
+  <div class="comp-em">🎉</div>
+  <h2 class="comp-title">Amazing Job!</h2>
+  <p class="comp-sub" id="comp-sub">You cooked together and learned new words!</p>
+  <div class="comp-words">
+    <div class="cw-title">Words You Learned Today</div>
+    <div class="word-badges" id="learned-badges"></div>
+  </div>
+  <button class="btn-primary" style="max-width:340px" onclick="goHome()">
+    <i data-lucide="rotate-ccw" style="width:20px;height:20px"></i> Cook Something New!
+  </button>
+  <div class="cf-holder" id="comp-cf"></div>
+</div>
+
+<!-- ════ CELEBRATION POPUP ════ -->
+<div class="popup-ov" id="popup-ov">
+  <div class="popup-card">
+    <div class="p-stars" id="p-stars">⭐🎊⭐</div>
+    <div class="p-title">Mission Complete! 🎯</div>
+    <div class="p-body" id="p-body">Amazing work, Little Chef!</div>
+    <div class="p-word-box">
+      <div class="pw-py" id="pw-py" style="display:none"></div>
+      <div class="pw-main" id="pw-main">tomate</div>
+      <div class="pw-lang" id="pw-lang">in Spanish means "tomato"</div>
+    </div>
+    <button class="btn-popup" onclick="closePopup()">Awesome! Keep going! 🚀</button>
+  </div>
+  <div class="cf-holder" id="popup-cf"></div>
+</div>
+
+</div>
+
+<script>
+/* ── STATE ── */
+const S = {
+  role:null, lang:null, ingredient:null, recipe:null,
+  step:0, missionDone:false, learnedWords:[],
+  history:['welcome'], cameraStream:null, scanTimer:null, _pendingScan:null
+};
+
+/* ── PRODUCE DATA ── */
+const PRODUCE = {
+  tomato:{emoji:'🍅',name:'Tomato',tagline:'Bright, juicy, and packed with goodness!',
+    bullets:['Safe for children of all ages and one of the most-loved veggies.','The deep red colour comes from lycopene, which helps keep bodies strong.','Cooking tomatoes makes some nutrients easier for the body to use.','Low in natural sugar and easy for little mouths to enjoy.'],
+    nutrients:['Vitamin C','Lycopene','Potassium','Vitamin K','Folate']},
+  carrot:{emoji:'🥕',name:'Carrot',tagline:'Crunchy, naturally sweet, great for eyes!',
+    bullets:['One of the most beginner-friendly vegetables for kids to handle.','The bright orange comes from beta-carotene — the body converts it to Vitamin A.','Great raw as sticks or cooked soft for younger children.','Naturally sweet with no added anything — kids usually love them!'],
+    nutrients:['Beta-carotene','Vitamin A','Fiber','Vitamin K','Potassium']},
+  broccoli:{emoji:'🥦',name:'Broccoli',tagline:'Little trees packed with big nutrition!',
+    bullets:['"Little trees" — the fun shape makes it approachable for kids.','One of the most nutrient-dense vegetables a child can eat.','Steam lightly — overcooking reduces the nutritional value significantly.','Repeated exposure helps children accept new tastes over time.'],
+    nutrients:['Vitamin C','Vitamin K','Folate','Iron','Fiber']},
+  apple:{emoji:'🍎',name:'Apple',tagline:'A timeless snack kids have always loved!',
+    bullets:['Perfect first food — naturally sweet and soft when cooked.','The skin holds most of the fiber; leave it on when safe to do so.','Pairs well with nut butters or yogurt for a balanced snack.','Available year-round and easy to find anywhere.'],
+    nutrients:['Fiber','Vitamin C','Quercetin','Potassium','Vitamin B6']},
+  banana:{emoji:'🍌',name:'Banana',tagline:"Nature's original on-the-go snack!",
+    bullets:['One of the easiest first foods — soft, no prep, very low choking risk.','A natural energy source — great before active play.','Riper bananas are sweeter; slightly firmer ones have more resistant starch.','Easy for toddlers to self-feed independently.'],
+    nutrients:['Potassium','Vitamin B6','Magnesium','Fiber','Vitamin C']},
+  spinach:{emoji:'🥬',name:'Spinach',tagline:'A true iron powerhouse for growing bodies!',
+    bullets:['Mild flavour blends easily into eggs, smoothies or pasta.','One of the best plant-based iron sources for growing children.','Baby spinach is tender and manageable for little hands.','Pair with lemon juice — Vitamin C doubles iron absorption!'],
+    nutrients:['Iron','Vitamin A','Vitamin K','Folate','Calcium']},
+  corn:{emoji:'🌽',name:'Corn',tagline:'Sunny, sweet, and so much fun to eat!',
+    bullets:['Corn on the cob is a fantastic sensory food experience for kids.','Cut kernels are safer for young children than whole bites.','A good natural source of energy and dietary fiber.','Naturally sweet — no seasoning needed for little ones.'],
+    nutrients:['Fiber','Vitamin B1','Folate','Magnesium','Antioxidants']},
+  cucumber:{emoji:'🥒',name:'Cucumber',tagline:'Cool, crisp and incredibly refreshing!',
+    bullets:['Over 95% water — helps keep children well hydrated.','Mild flavour — one of the most-accepted vegetables by picky eaters.','Cucumber sticks are a safe shape for older toddlers and children.','No cooking required — ready straight from the fridge.'],
+    nutrients:['Hydration','Vitamin K','Potassium','Vitamin C','Magnesium']},
+};
+
+/* ── RECIPES ── */
+const RECIPES = {
+  tomato:[
+    {id:'tom-b',meal:'Breakfast',name:'Tomato Egg Scramble',emoji:'🍳',time:'10 min',age:'3+',steps:[
+      {p:'Crack 2 eggs into a bowl and whisk with a fork. Chop 1 small tomato into small pieces.',m:'Watch carefully! Can you count the tomato pieces?',mt:'👀 Count the pieces',verb:'count',safety:'adult',stxt:'Adult cracks eggs & chops',nutr:'Eggs + tomato = complete protein and Vitamin C — a great morning combo!'},
+      {p:'Heat a non-stick pan on low. Add a small pat of butter and let it melt gently.',m:'Can you smell the butter? What does it smell like?',mt:'👃 Sniff & describe',verb:'cook',safety:'adult',stxt:'Adult handles the hot pan',nutr:'Low heat keeps eggs soft and fluffy — and preserves more nutrients.'},
+      {p:'Pour eggs in. Let sit 20 seconds, then push gently with a spatula.',m:'Watch the eggs change colour! Tell your grown-up what you see.',mt:'🔍 Spot the change',verb:'mix',safety:'adult',stxt:'Adult stirs on the hob',nutr:"Eggs are among the best sources of choline — essential for children's brain development!"},
+      {p:'Add tomato pieces just before eggs finish. Stir once, remove from heat immediately.',m:'Sprinkle the tomato pieces in! Count to 3 as you do it.',mt:'🍅 Add the tomatoes',verb:'place',safety:'child',stxt:'Child can add tomatoes safely',nutr:'Adding tomatoes off the heat keeps their Vitamin C intact — heat destroys it quickly.'},
+    ]},
+    {id:'tom-l',meal:'Lunch',name:'Tomato Caprese Salad',emoji:'🥗',time:'8 min',age:'2+',steps:[
+      {p:'Wash 3 ripe tomatoes under cool water for 20 seconds, rubbing the surface gently.',m:'Rub the tomato under the water. Count to 20!',mt:'💦 Wash & count',verb:'wash',safety:'child',stxt:'Great child task!',nutr:'Washing removes surface residues — always wash produce even if you plan to peel it.'},
+      {p:'Slice tomatoes into rounds about 1 cm thick. Slice fresh mozzarella the same way if using.',m:'Point to each tomato slice and count them!',mt:'🔢 Count the slices',verb:'count',safety:'adult',stxt:'Adult handles the knife',nutr:'Mozzarella adds calcium and protein — a perfect nutritional pairing with tomatoes.'},
+      {p:'Alternate tomato and mozzarella slices on a plate. Tuck fresh basil between each pair.',m:"Lay the basil leaves in between — like tucking them in to sleep!",mt:'🌿 Tuck the basil',verb:'place',safety:'child',stxt:'Child can arrange safely',nutr:'Fresh basil is rich in Vitamin K and adds antioxidant flavonoids.'},
+      {p:'Drizzle with olive oil and a small pinch of salt. Serve at room temperature.',m:'Drizzle the olive oil in a big circle! Count 1, 2, 3 drizzles.',mt:'🫒 Drizzle time!',verb:'mix',safety:'child',stxt:'Supervised pouring',nutr:'Olive oil boosts absorption of fat-soluble lycopene from tomatoes — a perfect pairing!'},
+    ]},
+    {id:'tom-d',meal:'Dinner',name:'Simple Tomato Pasta',emoji:'🍝',time:'20 min',age:'3+',steps:[
+      {p:'Bring a pot of salted water to a boil. Cook pasta per package directions.',m:'Watch the bubbles! Are they big or tiny?',mt:'🫧 Bubble watch',verb:'cook',safety:'adult',stxt:'Adult handles boiling water',nutr:'Whole-wheat pasta adds extra fiber and B vitamins compared to white pasta.'},
+      {p:'While pasta cooks, dice 4 tomatoes finely. Mince a small garlic clove if using.',m:'How many tomato pieces? Challenge: count past 10!',mt:'🔢 Big count challenge',verb:'count',safety:'adult',stxt:'Adult chops and minces',nutr:'Garlic contains allicin — a natural compound that supports immune health.'},
+      {p:'Warm olive oil in a pan. Add tomatoes, a pinch of salt and sugar. Cook 8 minutes.',m:'Can you smell the sauce? Describe the smell to your grown-up!',mt:'👃 Sauce smell test',verb:'cook',safety:'adult',stxt:'Adult handles the hot pan',nutr:'Cooking tomatoes for 8+ minutes significantly boosts lycopene absorption!'},
+      {p:'Drain pasta and toss with sauce. Top with a little grated parmesan if desired.',m:'Sprinkle the cheese! Count how many shakes you make.',mt:'🧀 Cheese sprinkle!',verb:'place',safety:'child',stxt:'Child can sprinkle safely',nutr:'Parmesan adds calcium and a rich umami depth — a little goes a long way.'},
+    ]},
+  ],
+  carrot:[
+    {id:'car-b',meal:'Breakfast',name:'Carrot Oat Pancakes',emoji:'🥞',time:'15 min',age:'3+',steps:[
+      {p:'Grate 1 medium carrot on the large holes of a box grater. Set aside.',m:'Watch the carrot disappear into tiny pieces! What colour do you see?',mt:'🔍 Colour watch',verb:'wash',safety:'adult',stxt:'Adult uses the grater',nutr:'Grating carrots breaks cells, unlocking more beta-carotene than eating them whole.'},
+      {p:'Mix 1 cup oats, 1 egg, ½ cup milk, 1 tsp honey, and the grated carrot in a bowl.',m:'Stir 10 big circles! Count each stir out loud.',mt:'🥄 Stir & count',verb:'mix',safety:'child',stxt:'Child can stir safely',nutr:'Oats provide slow-release energy — keeping kids fuller for longer all morning.'},
+      {p:'Spoon batter in small rounds onto a non-stick pan on medium-low. Cook 2–3 mins per side.',m:'Look for tiny bubbles on top — that means flip time! Can you spot them?',mt:'🫧 Bubble spotter',verb:'cook',safety:'adult',stxt:'Adult flips pancakes',nutr:'Egg binds everything and adds complete protein, making this a balanced meal.'},
+      {p:'Stack and serve with a drizzle of honey or a dollop of yogurt.',m:'Stack the pancakes — how high can the tower go? Count each one!',mt:'🥞 Stack the tower',verb:'place',safety:'child',stxt:'Child can stack safely',nutr:'Yogurt topping adds probiotics and calcium — great for gut and bone health.'},
+    ]},
+    {id:'car-l',meal:'Lunch',name:'Carrot & Hummus Wraps',emoji:'🌯',time:'10 min',age:'2+',steps:[
+      {p:'Wash 3 carrots. An adult peels and cuts them into long sticks about 1 cm wide.',m:'Feel the carrot before and after washing — can you notice the difference?',mt:'🖐️ Touch & feel',verb:'wash',safety:'adult',stxt:'Adult peels and cuts',nutr:'The outer carrot layer holds extra nutrients — always rinse thoroughly!'},
+      {p:'Spread a generous layer of hummus on a whole-wheat wrap.',m:'Spread the hummus with a spoon in big swirls! Make a pattern.',mt:'🎨 Swirl & spread',verb:'mix',safety:'child',stxt:'Child can spread safely',nutr:'Hummus is made from chickpeas — packed with plant protein and healthy fats.'},
+      {p:'Lay carrot sticks across the middle. Add cucumber or spinach if you like.',m:'Line up the sticks side by side. How many fit? Count them!',mt:'🥕 Line them up',verb:'count',safety:'child',stxt:'Child can arrange safely',nutr:'Adding multiple coloured vegetables means more varied nutrients — eat the rainbow!'},
+      {p:'Roll the wrap tightly, cut in half diagonally, and serve with extra hummus for dipping.',m:'Dip a carrot stick in the hummus! How does it taste?',mt:'😋 Taste & describe',verb:'place',safety:'child',stxt:'Child can dip safely',nutr:'Pairing carrots with olive-oil-based hummus boosts Vitamin A absorption.'},
+    ]},
+    {id:'car-d',meal:'Dinner',name:'Honey-Roasted Carrots',emoji:'🫚',time:'35 min',age:'3+',steps:[
+      {p:'Preheat oven to 200°C / 400°F. Wash, peel and cut carrots into equal batons.',m:'Sort the batons by size — big, medium, small!',mt:'📏 Sort by size',verb:'count',safety:'adult',stxt:'Adult uses oven and knife',nutr:'Roasting concentrates natural sugars — making vegetables sweeter and more appealing!'},
+      {p:'Toss carrots in a bowl with 1 tbsp olive oil, 1 tsp honey, salt and thyme.',m:'Toss the carrots! Count 10 big tosses.',mt:'🥗 Toss & coat',verb:'mix',safety:'child',stxt:'Child can toss in bowl',nutr:'Olive oil is needed to absorb fat-soluble Vitamin A from the carrots.'},
+      {p:'Spread in a single layer on a baking tray. Roast 25 minutes, turning halfway.',m:'Peek through the oven glass! Are they going golden yet?',mt:'🔍 Oven watching',verb:'cook',safety:'adult',stxt:'Adult handles the hot oven',nutr:'Golden edges form caramelised natural sugars — a wholesome treat!'},
+      {p:'Cool 5 minutes, then plate as a side dish.',m:'Arrange the carrots in a pretty pattern — a rainbow or a star! ⭐',mt:'⭐ Make a pattern',verb:'place',safety:'child',stxt:'Supervised plating',nutr:'Letting food cool slightly makes it safer and lets the flavours develop fully.'},
+    ]},
+  ],
+  apple:[
+    {id:'app-b',meal:'Breakfast',name:'Cinnamon Apple Oatmeal',emoji:'🍲',time:'12 min',age:'2+',steps:[
+      {p:'Peel and core 1 apple. Dice into small 1 cm pieces and set aside.',m:'Watch the apple turn into little squares! Count as many as you can.',mt:'🔢 Count the cubes',verb:'count',safety:'adult',stxt:'Adult peels, cores and cuts',nutr:'Apple skins hold quercetin — a powerful plant antioxidant. Keep skin on when safe.'},
+      {p:'Cook 1 cup rolled oats with 2 cups water or milk on medium heat, stirring occasionally.',m:'Stir the oats — 5 clockwise, then 5 the other way!',mt:'🌀 Stir circles',verb:'mix',safety:'adult',stxt:'Adult stirs on hot hob',nutr:'Oats are rich in beta-glucan fiber — shown to support healthy cholesterol levels.'},
+      {p:'When oats are nearly done, add apple pieces, a pinch of cinnamon and 1 tsp honey.',m:'Sprinkle the cinnamon! How many shakes to turn the oats brown?',mt:'🟤 Colour change',verb:'mix',safety:'child',stxt:'Child can add cinnamon',nutr:'Cinnamon has anti-inflammatory properties — and makes everything smell wonderful!'},
+      {p:'Serve in bowls. Top with extra apple, raisins or a drizzle of honey.',m:'Add your toppings and make a smiley face! 😊',mt:'😊 Face art',verb:'place',safety:'child',stxt:'Child can decorate',nutr:'Raisins are a concentrated source of iron and quick energy — great in small amounts.'},
+    ]},
+    {id:'app-l',meal:'Lunch',name:'Apple & Cheese Snack Plate',emoji:'🍱',time:'5 min',age:'2+',steps:[
+      {p:'Wash 2 apples under cold water for 30 seconds. Dry with a clean cloth.',m:'Rub the apple under water with both hands. Count to 30!',mt:'💦 Wash & count',verb:'wash',safety:'child',stxt:'Great child task!',nutr:'Always wash apples — the skin is nutritious and eating it is encouraged.'},
+      {p:'Slice apples into wedges. Remove core and any seeds completely.',m:'Count all the wedges! How many did one apple make?',mt:'🍎 Count the wedges',verb:'count',safety:'adult',stxt:'Adult handles knife and core',nutr:'Apple seeds contain amygdalin — always remove them fully, especially for children.'},
+      {p:'Squeeze a few drops of lemon juice over the slices to keep them bright.',m:'Squeeze the lemon over the bowl — watch the juice fall like rain!',mt:'🍋 Lemon rain!',verb:'mix',safety:'child',stxt:'Supervised squeezing',nutr:'Vitamin C in lemon prevents browning AND adds extra nutrients. Smart kitchen trick!'},
+      {p:'Arrange apple slices on a plate with cubes of mild cheddar.',m:'Make a sunshine pattern — apples in a circle, cheese in the middle! ☀️',mt:'☀️ Sunshine plate',verb:'place',safety:'child',stxt:'Child can arrange safely',nutr:'Apple + cheese = fiber + calcium + protein. A perfectly balanced snack!'},
+    ]},
+    {id:'app-d',meal:'Dinner',name:'Apple-Glazed Chicken',emoji:'🍗',time:'30 min',age:'5+',steps:[
+      {p:'Dice 1 apple small. Mix with juice of ½ lemon, 1 tbsp honey, pinch of cinnamon.',m:'Count the apple cubes! Find the biggest and smallest ones.',mt:'🔢 Compare sizes',verb:'count',safety:'adult',stxt:'Adult chops and juices',nutr:'Natural apple sugars caramelise during cooking — no refined sugar glaze needed!'},
+      {p:'Season 2 chicken breasts with salt and pepper. Heat oil in a pan on medium-high.',m:'Can you smell the pepper? What does it smell like to you?',mt:'👃 Smell test',verb:'cook',safety:'adult',stxt:'Adult handles raw chicken',nutr:'Always cook chicken to 74°C / 165°F internal temperature for food safety.'},
+      {p:'Sear chicken 4 minutes each side. Add glaze, reduce heat, cover, cook 8 more minutes.',m:'Watch the glaze bubble and turn golden! What colour is it?',mt:'🔍 Golden watch',verb:'cook',safety:'adult',stxt:'Adult handles hot pan',nutr:'Searing locks in moisture — giving juicy chicken rather than dry meat.'},
+      {p:'Rest 3 minutes. Slice and serve with vegetables or rice. Spoon extra glaze on top.',m:'Help pour the extra glaze on top! Count to 3 as you pour.',mt:'✨ Glaze drizzle!',verb:'place',safety:'child',stxt:'Supervised pouring',nutr:'Resting meat lets juices redistribute — never skip this step for best texture!'},
+    ]},
+  ],
+  banana:[
+    {id:'ban-b',meal:'Breakfast',name:'Banana Smoothie Bowl',emoji:'🍌',time:'8 min',age:'2+',steps:[
+      {p:'Peel 2 ripe bananas and break into chunks. Freeze for 30 min for a thicker texture.',m:'Peel the banana and break it into 4 pieces! Count the chunks.',mt:'🍌 Peel & break',verb:'count',safety:'child',stxt:'Child can peel safely',nutr:'Riper, spottier bananas are sweeter and easier to digest — great for little tummies.'},
+      {p:'Blend frozen banana with 3 tbsp yogurt until thick and creamy. No sugar needed.',m:'Listen to the blender! Does the sound change when you add the banana?',mt:'👂 Listening game',verb:'mix',safety:'adult',stxt:'Adult uses the blender',nutr:'Frozen banana + yogurt = ice-cream-like texture with zero added sugar!'},
+      {p:'Pour into a bowl. It should be thick enough for toppings to sit on top.',m:"Tip the bowl gently — does it move like water or stay put?",mt:'🔍 Thick or runny?',verb:'place',safety:'child',stxt:'Child can pour with help',nutr:'Banana is rich in Vitamin B6 — important for brain development and mood regulation.'},
+      {p:'Top with sliced banana, granola, berries and a drizzle of honey. Serve immediately.',m:'Add your toppings and make a funny face! 😄',mt:'😄 Toppings face!',verb:'place',safety:'child',stxt:'Child can top safely',nutr:'Granola adds complex carbs and crunch — choose low-sugar varieties for children.'},
+    ]},
+  ],
+  spinach:[
+    {id:'spi-b',meal:'Breakfast',name:'Spinach Green Scrambled Eggs',emoji:'🍳',time:'12 min',age:'3+',steps:[
+      {p:'Wash a large handful of baby spinach. Shake dry or pat with a clean towel.',m:'Shake the spinach like maracas over the sink! Count 10 big shakes.',mt:'🌿 Shake the greens',verb:'wash',safety:'child',stxt:'Great child task!',nutr:'Spinach is one of the most iron-dense vegetables — critical for growing children.'},
+      {p:'Crack 3 eggs and whisk with a fork. Season lightly with salt and pepper.',m:'Whisk as fast as you can! Count to 20 while whisking.',mt:'🥚 Whisk race!',verb:'mix',safety:'adult',stxt:'Adult cracks eggs',nutr:'Egg yolks contain choline — an essential nutrient for brain and nervous system health.'},
+      {p:'Heat oil in a pan. Add spinach, stir until just wilted (1 min). Pour eggs over.',m:'Watch the spinach get smaller as it heats — where does it go?!',mt:'🔍 Shrinking spinach',verb:'cook',safety:'adult',stxt:'Adult handles hot pan',nutr:'Wilting briefly preserves more nutrients than long cooking — quick is better here!'},
+      {p:'Scramble gently until just set. Remove from heat while still slightly soft.',m:'The eggs are ready when they look like soft fluffy clouds. 🌤️',mt:'☁️ Cloud eggs!',verb:'mix',safety:'adult',stxt:'Adult removes from heat',nutr:'Pair with lemon juice to double spinach iron absorption — a smart kitchen trick!'},
+    ]},
+  ],
+  broccoli:[
+    {id:'bro-l',meal:'Lunch',name:'Broccoli Cheese Bites',emoji:'🥦',time:'18 min',age:'3+',steps:[
+      {p:'Wash a broccoli head. Break into small florets, roughly the same size.',m:'Break broccoli into tiny trees! How many little trees do you have?',mt:'🌳 Count the trees',verb:'wash',safety:'child',stxt:'Child can break florets',nutr:'Broccoli has more Vitamin C per gram than an orange — a true nutrition superstar!'},
+      {p:'Steam florets 4 minutes until bright green and just tender. Drain and cool.',m:'Watch it turn BRIGHT green! What colour was it before?',mt:'🎨 Colour change',verb:'cook',safety:'adult',stxt:'Adult handles steam',nutr:'Exactly 4 minutes steaming preserves the most Vitamin C and sulforaphane.'},
+      {p:'Mix cooled broccoli with 1 egg, 4 tbsp breadcrumbs, 3 tbsp grated cheddar, pinch salt.',m:'Mash with a fork — lumpy is perfect, not smooth!',mt:'🔨 Mash time!',verb:'mix',safety:'child',stxt:'Child can mash safely',nutr:'Cheddar adds calcium and fat to help absorb fat-soluble Vitamins A and K from broccoli.'},
+      {p:'Form into patties. Bake at 200°C / 400°F for 12 minutes, flipping halfway.',m:'Shape a patty with your hands — circle, star or heart?',mt:'❤️ Shape making!',verb:'place',safety:'adult',stxt:'Adult handles oven',nutr:'Baking keeps these bites light — much less saturated fat than frying.'},
+    ]},
+  ],
+  corn:[
+    {id:'cor-l',meal:'Lunch',name:'Corn & Avocado Salsa',emoji:'🫙',time:'10 min',age:'2+',steps:[
+      {p:'Drain and rinse canned corn well. (If fresh, adult cuts kernels from the cob.)',m:'Stir the corn 20 times! Count every stir.',mt:'🌽 Stir & count',verb:'wash',safety:'adult',stxt:'Adult opens can or cuts cob',nutr:'Corn gives both soluble and insoluble fiber — great for a healthy digestive system.'},
+      {p:'Dice 1 ripe avocado into small cubes. Juice ½ lime.',m:'Look inside the avocado — what colour is it?',mt:'🔍 Inside check',verb:'count',safety:'adult',stxt:'Adult handles knife and avocado pit',nutr:'Avocado provides healthy fats essential for brain development in children.'},
+      {p:'Combine corn, avocado and lime juice in a bowl. Fold gently with a spoon.',m:'Fold gently — like tucking in a blanket! Count 5 gentle folds.',mt:'🛏️ Gentle folding',verb:'mix',safety:'child',stxt:'Child can fold gently',nutr:'Lime juice Vitamin C boosts iron absorption from the corn — a smart pairing!'},
+      {p:'Season to taste. Serve with tortilla chips or as a topping for rice or chicken.',m:'Taste a tiny bit on a chip! Can you taste the lime? The corn?',mt:'😋 Taste test!',verb:'place',safety:'child',stxt:'Child can taste safely',nutr:'Use low-salt chips for children where possible — the salsa has plenty of flavour.'},
+    ]},
+  ],
+  cucumber:[
+    {id:'cuc-l',meal:'Lunch',name:'Cucumber Ribbon Salad',emoji:'🥗',time:'8 min',age:'2+',steps:[
+      {p:'Wash 2 cucumbers under cold running water, scrubbing the skin gently.',m:'Scrub the cucumber under the water — how does the skin feel?',mt:'🖐️ Texture check',verb:'wash',safety:'child',stxt:'Great child task!',nutr:'Cucumber skin contains Vitamin K and silica — keep it on for extra nutrition.'},
+      {p:'Use a vegetable peeler to create long ribbon strips down the length of the cucumber.',m:'Count each ribbon as it curls off! How many do you make?',mt:'🎀 Count the ribbons',verb:'count',safety:'adult',stxt:'Adult uses the peeler for ribbons',nutr:"Cucumbers are 96% water — one of the most hydrating foods you can eat!"},
+      {p:'Toss ribbons in a bowl with 1 tsp rice vinegar, ½ tsp sesame oil, pinch salt and sesame seeds.',m:'Toss the ribbons gently! Count 10 big tosses.',mt:'🌀 10 tosses!',verb:'mix',safety:'child',stxt:'Child can toss in bowl',nutr:'Sesame seeds add calcium, zinc and healthy fats to this simple salad.'},
+      {p:"Arrange on a plate, garnish with sesame seeds and serve chilled.",m:"Arrange the ribbons like a bird's nest! 🐣",mt:'🐣 Nest building!',verb:'place',safety:'child',stxt:'Child can arrange safely',nutr:'Chilling cucumber preserves the crunch and maximises that refreshing taste!'},
+    ]},
+  ],
+};
+
+/* ── LANGUAGE DATA ── */
+const LANG = {
+  en:  {name:'English',           words:{tomato:{w:'tomato',p:null},carrot:{w:'carrot',p:null},broccoli:{w:'broccoli',p:null},apple:{w:'apple',p:null},banana:{w:'banana',p:null},spinach:{w:'spinach',p:null},corn:{w:'corn',p:null},cucumber:{w:'cucumber',p:null}},verbs:{wash:{w:'wash',p:null},mix:{w:'mix',p:null},count:{w:'count',p:null},cook:{w:'cook',p:null},place:{w:'place',p:null}}},
+  es:  {name:'Spanish',           words:{tomato:{w:'tomate',p:null},carrot:{w:'zanahoria',p:null},broccoli:{w:'brócoli',p:null},apple:{w:'manzana',p:null},banana:{w:'plátano',p:null},spinach:{w:'espinaca',p:null},corn:{w:'maíz',p:null},cucumber:{w:'pepino',p:null}},verbs:{wash:{w:'lavar',p:null},mix:{w:'mezclar',p:null},count:{w:'contar',p:null},cook:{w:'cocinar',p:null},place:{w:'colocar',p:null}}},
+  zhs: {name:'Simplified Chinese', words:{tomato:{w:'番茄',p:'fān qié'},carrot:{w:'胡萝卜',p:'hú luó bo'},broccoli:{w:'西兰花',p:'xī lán huā'},apple:{w:'苹果',p:'píng guǒ'},banana:{w:'香蕉',p:'xiāng jiāo'},spinach:{w:'菠菜',p:'bō cài'},corn:{w:'玉米',p:'yù mǐ'},cucumber:{w:'黄瓜',p:'huáng guā'}},verbs:{wash:{w:'洗',p:'xǐ'},mix:{w:'拌',p:'bàn'},count:{w:'数',p:'shǔ'},cook:{w:'煮',p:'zhǔ'},place:{w:'放',p:'fàng'}}},
+  zht: {name:'Traditional Chinese',words:{tomato:{w:'番茄',p:'fān qié'},carrot:{w:'胡蘿蔔',p:'hú luó bo'},broccoli:{w:'青花菜',p:'qīng huā cài'},apple:{w:'蘋果',p:'píng guǒ'},banana:{w:'香蕉',p:'xiāng jiāo'},spinach:{w:'菠菜',p:'bō cài'},corn:{w:'玉米',p:'yù mǐ'},cucumber:{w:'黃瓜',p:'huáng guā'}},verbs:{wash:{w:'洗',p:'xǐ'},mix:{w:'拌',p:'bàn'},count:{w:'數',p:'shǔ'},cook:{w:'煮',p:'zhǔ'},place:{w:'放',p:'fàng'}}},
+};
+
+const SCAN_POOL = [
+  {id:'tomato',emoji:'🍅',name:'Tomato',conf:'93% confidence'},
+  {id:'carrot',emoji:'🥕',name:'Carrot',conf:'91% confidence'},
+  {id:'apple',emoji:'🍎',name:'Apple',conf:'89% confidence'},
+  {id:'banana',emoji:'🍌',name:'Banana',conf:'95% confidence'},
+  {id:'broccoli',emoji:'🥦',name:'Broccoli',conf:'88% confidence'},
+  {id:'spinach',emoji:'🥬',name:'Spinach',conf:'87% confidence'},
+  {id:'corn',emoji:'🌽',name:'Corn',conf:'92% confidence'},
+  {id:'cucumber',emoji:'🥒',name:'Cucumber',conf:'90% confidence'},
+];
+
+const IMG = {
+  'tom-b':'https://source.unsplash.com/400x260/?scrambled-eggs,tomato',
+  'tom-l':'https://source.unsplash.com/400x260/?caprese,salad',
+  'tom-d':'https://source.unsplash.com/400x260/?tomato,pasta',
+  'car-b':'https://source.unsplash.com/400x260/?pancakes,breakfast',
+  'car-l':'https://source.unsplash.com/400x260/?wrap,hummus',
+  'car-d':'https://source.unsplash.com/400x260/?roasted,carrots',
+  'app-b':'https://source.unsplash.com/400x260/?oatmeal,apple',
+  'app-l':'https://source.unsplash.com/400x260/?apple,cheese,snack',
+  'app-d':'https://source.unsplash.com/400x260/?chicken,apple,glaze',
+  'ban-b':'https://source.unsplash.com/400x260/?smoothie,bowl,banana',
+  'spi-b':'https://source.unsplash.com/400x260/?spinach,eggs,breakfast',
+  'bro-l':'https://source.unsplash.com/400x260/?broccoli,cheese,bites',
+  'cor-l':'https://source.unsplash.com/400x260/?corn,avocado,salsa',
+  'cuc-l':'https://source.unsplash.com/400x260/?cucumber,salad',
+};
+
+/* ── WELCOME ── */
+function selectRole(r){
+  S.role=r;
+  document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('role-'+r).classList.add('selected');
+  checkStart();
+}
+function selectLang(l){
+  S.lang=l;
+  document.querySelectorAll('.lang-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('lang-'+l).classList.add('selected');
+  checkStart();
+}
+function checkStart(){document.getElementById('btn-start').disabled=!(S.role&&S.lang);}
+function goToScanner(){renderQuickPicks();showScreen('scanner');}
+
+/* ── CAMERA ── */
+async function requestCamera(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    S.cameraStream=stream;
+    const v=document.getElementById('cam-video');
+    v.srcObject=stream;
+    document.getElementById('cam-ph').style.display='none';
+    document.getElementById('cam-overlay').style.display='flex';
+    document.getElementById('cam-controls').style.display='flex';
+  }catch(e){
+    const ph=document.getElementById('cam-ph');
+    ph.onclick=null;
+    ph.innerHTML=`<i data-lucide="camera-off" style="width:48px;height:48px;color:rgba(255,255,255,.5)"></i><div style="color:rgba(255,255,255,.75);font-size:14px;font-weight:700;text-align:center;padding:0 24px">Camera not available.<br>Use the quick picks below.</div>`;
+    lucide.createIcons();
+  }
+}
+function stopCamera(){
+  if(S.cameraStream){S.cameraStream.getTracks().forEach(t=>t.stop());S.cameraStream=null;}
+  const v=document.getElementById('cam-video'); if(v) v.srcObject=null;
+  document.getElementById('cam-ph').style.display='flex';
+  document.getElementById('cam-overlay').style.display='none';
+  document.getElementById('cam-controls').style.display='none';
+  document.getElementById('id-card').classList.remove('show');
+  document.getElementById('scan-status').style.display='none';
+  clearTimeout(S.scanTimer);
+}
+function triggerScan(){
+  const st=document.getElementById('scan-status');
+  st.style.display='block'; st.textContent='Scanning…';
+  clearTimeout(S.scanTimer);
+  S.scanTimer=setTimeout(()=>{
+    st.textContent='Item detected! ✓';
+    setTimeout(()=>{st.style.display='none';},1400);
+    const pick=SCAN_POOL[Math.floor(Math.random()*SCAN_POOL.length)];
+    document.getElementById('id-emoji').textContent=pick.emoji;
+    document.getElementById('id-name').textContent=pick.name;
+    document.getElementById('id-conf').textContent=pick.conf;
+    document.getElementById('id-card').classList.add('show');
+    S._pendingScan=pick;
+  },2200);
+}
+function retryScan(){
+  document.getElementById('id-card').classList.remove('show');
+  S._pendingScan=null;
+}
+function confirmIngredient(){
+  if(!S._pendingScan) return;
+  const id=S._pendingScan.id;
+  stopCamera();
+  loadOverview(id);
+}
+function renderQuickPicks(){
+  document.getElementById('quick-picks').innerHTML=SCAN_POOL.map(p=>
+    `<div class="qp-chip" onclick="quickPick('${p.id}')"><span style="font-size:20px">${p.emoji}</span>${p.name}</div>`
+  ).join('');
+}
+function quickPick(id){stopCamera();loadOverview(id);}
+
+/* ── OVERVIEW ── */
+function loadOverview(id){
+  S.ingredient=id;
+  const info=PRODUCE[id]||PRODUCE.tomato;
+  document.getElementById('ov-emoji').textContent=info.emoji;
+  document.getElementById('ov-name').textContent=info.name;
+  document.getElementById('ov-tagline').textContent=info.tagline;
+  document.getElementById('ov-bullets').innerHTML=info.bullets.map(b=>`<div class="ov-bullet"><div class="ov-dot"></div><div>${b}</div></div>`).join('');
+  document.getElementById('ov-nutrients').innerHTML=info.nutrients.map(n=>`<div class="n-chip">${n}</div>`).join('');
+  showScreen('overview');
+}
+
+/* ── EXPLORE ── */
+function loadExplore(){
+  const info=PRODUCE[S.ingredient]||PRODUCE.tomato;
+  document.getElementById('explore-sub').textContent=`Ways to cook ${info.emoji} ${info.name} with your little chef`;
+  const recipes=RECIPES[S.ingredient]||RECIPES.tomato;
+  const grid=document.getElementById('recipe-grid');
+  grid.innerHTML=recipes.map(r=>{
+    const src=IMG[r.id];
+    const imgHtml=src
+      ? `<img class="rc-img" src="${src}" alt="${r.name}" loading="lazy" onerror="this.style.display='none';this.parentNode.querySelector('.rc-placeholder').style.display='flex'"><div class="rc-placeholder" style="display:none">${info.emoji}</div>`
+      : `<div class="rc-placeholder">${info.emoji}</div>`;
+    return `<div class="recipe-card" data-recipe-id="${r.id}">
+      ${imgHtml}
+      <div class="rc-body">
+        <div class="rc-meal">${r.meal}</div>
+        <div class="rc-name">${r.name}</div>
+        <div class="rc-tags">
+          <span class="rc-tag">⏱ ${r.time}</span>
+          <span class="rc-tag">👶 Age ${r.age}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  // attach clicks via event delegation on the grid
+  grid.onclick = function(e){
+    const card = e.target.closest('.recipe-card');
+    if(card && card.dataset.recipeId) startRecipe(card.dataset.recipeId);
+  };
+}
+
+/* ── KITCHEN ── */
+let kSteps=[];
+function startRecipe(rid){
+  const recipes=RECIPES[S.ingredient]||RECIPES.tomato;
+  const recipe=recipes.find(r=>r.id===rid)||recipes[0];
+  S.recipe=recipe; S.step=0; S.learnedWords=[];
+  kSteps=recipe.steps;
+  const info=PRODUCE[S.ingredient]||PRODUCE.tomato;
+  document.getElementById('k-emoji').textContent=info.emoji;
+  document.getElementById('k-title').textContent=recipe.name;
+  document.getElementById('k-total').textContent=kSteps.length;
+  renderKStep();
+  showScreen('kitchen');
+}
+
+function renderKStep(){
+  const step=kSteps[S.step];
+  const total=kSteps.length;
+  const ld=LANG[S.lang]||LANG.es;
+  const info=PRODUCE[S.ingredient]||PRODUCE.tomato;
+  const isCJK=S.lang==='zhs'||S.lang==='zht';
+
+  // header
+  document.getElementById('k-step-n').textContent=S.step+1;
+  document.getElementById('k-badge').textContent='Step '+(S.step+1);
+  document.getElementById('k-prog').style.width=((S.step+1)/total*100)+'%';
+
+  // parent
+  document.getElementById('p-lbl').textContent=`Step ${S.step+1} of ${total}`;
+  document.getElementById('p-text').textContent=step.p;
+  document.getElementById('p-nutr').innerHTML=`<strong style="color:var(--brown)">🌟 Nutrition tip:</strong> ${step.nutr}`;
+
+  // safety badge
+  const sb=document.getElementById('p-safety');
+  const cls=step.safety==='adult'?'sb-red':step.safety==='supervised'?'sb-amber':'sb-green';
+  const icon=step.safety==='adult'?'shield-alert':step.safety==='supervised'?'shield':'shield-check';
+  sb.className='safety-badge '+cls;
+  sb.innerHTML=`<i data-lucide="${icon}" style="width:12px;height:12px"></i><span>${step.stxt}</span>`;
+
+  // chef
+  document.getElementById('m-title').textContent=step.mt;
+  document.getElementById('m-txt').textContent=step.m;
+  document.getElementById('m-check').textContent='⬜';
+  document.getElementById('mission-card').classList.remove('done');
+  S.missionDone=false;
+
+  // words
+  const we=ld.words[S.ingredient]||{w:info.name,p:null};
+  const ve=ld.verbs[step.verb]||ld.verbs.wash;
+
+  document.getElementById('wp-en-i').textContent=info.name.toLowerCase();
+  document.getElementById('wp-tgt-i').textContent=we.w;
+  const pyi=document.getElementById('wp-py-i');
+  if(isCJK&&we.p){pyi.textContent=we.p;pyi.style.display='block';}else{pyi.style.display='none';}
+
+  document.getElementById('wp-en-v').textContent='action: '+step.verb;
+  document.getElementById('wp-tgt-v').textContent=ve.w;
+  const pyv=document.getElementById('wp-py-v');
+  if(isCJK&&ve.p){pyv.textContent=ve.p;pyv.style.display='block';}else{pyv.style.display='none';}
+
+  [we.w,ve.w].forEach(w=>{if(!S.learnedWords.includes(w))S.learnedWords.push(w);});
+
+  const pb=document.getElementById('btn-k-prev');
+  pb.disabled=S.step===0;
+
+  const nb=document.getElementById('btn-k-next');
+  nb.innerHTML=S.step===kSteps.length-1
+    ?`Finish! <i data-lucide="star" style="width:17px;height:17px"></i>`
+    :`Next Step <i data-lucide="chevron-right" style="width:17px;height:17px"></i>`;
+  lucide.createIcons();
+}
+
+function completeMission(){
+  if(S.missionDone) return;
+  S.missionDone=true;
+  document.getElementById('m-check').textContent='✅';
+  document.getElementById('mission-card').classList.add('done');
+  setTimeout(showCelebration,320);
+}
+
+function showCelebration(){
+  const ld=LANG[S.lang]||LANG.es;
+  const info=PRODUCE[S.ingredient]||PRODUCE.tomato;
+  const we=ld.words[S.ingredient]||{w:info.name,p:null};
+  const isCJK=S.lang==='zhs'||S.lang==='zht';
+  const stars=['⭐🎊⭐','🌟✨🌟','🎉🥳🎉','🏆🌈🏆'];
+  document.getElementById('p-stars').textContent=stars[S.step%stars.length];
+  document.getElementById('p-body').textContent=`Amazing, Little Chef! You just used a word in ${ld.name}!`;
+  document.getElementById('pw-main').textContent=we.w;
+  document.getElementById('pw-lang').textContent=`In ${ld.name} means "${info.name.toLowerCase()}"`;
+  const ppy=document.getElementById('pw-py');
+  if(isCJK&&we.p){ppy.textContent=we.p;ppy.style.display='block';}else{ppy.style.display='none';}
+  spawnConfetti('popup-cf');
+  document.getElementById('popup-ov').classList.add('show');
+}
+function closePopup(){document.getElementById('popup-ov').classList.remove('show');}
+
+function nextKStep(){
+  if(S.step<kSteps.length-1){S.step++;renderKStep();}
+  else showComplete();
+}
+function prevKStep(){
+  if(S.step>0){S.step--;renderKStep();}
+  else showScreen('explore');
+}
+
+/* ── COMPLETE ── */
+function showComplete(){
+  const info=PRODUCE[S.ingredient]||PRODUCE.tomato;
+  const ld=LANG[S.lang]||LANG.es;
+  document.getElementById('comp-sub').textContent=
+    `You cooked ${info.emoji} ${info.name} and learned ${S.learnedWords.length} words in ${ld.name}! You're both kitchen superstars! ⭐`;
+  document.getElementById('learned-badges').innerHTML=
+    S.learnedWords.map(w=>`<div class="wb">${w}</div>`).join('');
+  showScreen('complete');
+  setTimeout(()=>spawnConfetti('comp-cf'),450);
+}
+
+/* ── CONFETTI ── */
+function spawnConfetti(cid){
+  const el=document.getElementById(cid); if(!el) return;
+  el.innerHTML='';
+  const cols=['#FFB380','#B2AC88','#FFFDD0','#7EC87E','#FFD080','#A0C4FF','#F48FB1'];
+  for(let i=0;i<44;i++){
+    const p=document.createElement('div');
+    p.className='cp';
+    p.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*18+2}%;width:${7+Math.random()*9}px;height:${7+Math.random()*9}px;background:${cols[i%cols.length]};animation-delay:${Math.random()*.7}s;animation-duration:${1.2+Math.random()*.9}s;transform:rotate(${Math.random()*360}deg)`;
+    el.appendChild(p);
+  }
+}
+
+/* ── SCREEN NAV ── */
+function showScreen(name){
+  if(name==='explore') loadExplore();
+  const all=document.querySelectorAll('.screen');
+  const tgt=document.getElementById('screen-'+name);
+  if(!tgt) return;
+  all.forEach(s=>{
+    if(s===tgt) return;
+    s.classList.remove('active');
+    s.classList.add('exit');
+    setTimeout(()=>{s.classList.remove('exit'); s.style.zIndex='';},420);
+  });
+  tgt.style.zIndex='10';
+  setTimeout(()=>{tgt.classList.add('active');lucide.createIcons();},60);
+  const nav=document.getElementById('nav-bar');
+  name==='welcome'?nav.classList.remove('visible'):nav.classList.add('visible');
+  if(S.history[S.history.length-1]!==name) S.history.push(name);
+}
+
+function goBack(){
+  if(S.history.length<=1) return;
+  S.history.pop();
+  const prev=S.history[S.history.length-1];
+  const tgt=document.getElementById('screen-'+prev);
+  if(!tgt) return;
+  document.querySelectorAll('.screen').forEach(s=>{
+    s.classList.remove('active');
+    s.classList.add('exit');
+    setTimeout(()=>{s.classList.remove('exit'); s.style.zIndex='';},420);
+  });
+  tgt.style.zIndex='10';
+  setTimeout(()=>{
+    tgt.classList.add('active');
+    lucide.createIcons();
+    if(prev==='welcome') document.getElementById('nav-bar').classList.remove('visible');
+  },60);
+}
+
+function goHome(){
+  stopCamera();
+  Object.assign(S,{ingredient:null,recipe:null,step:0,missionDone:false,learnedWords:[],history:['welcome'],_pendingScan:null});
+  document.getElementById('id-card').classList.remove('show');
+  showScreen('welcome');
+  document.getElementById('nav-bar').classList.remove('visible');
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded',()=>{lucide.createIcons();});
+</script>
+</body>
+</html>
