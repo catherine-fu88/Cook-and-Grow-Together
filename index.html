@@ -83,7 +83,43 @@ body{font-family:'Quicksand',sans-serif;background:#e8e4d0;min-height:100vh;disp
 .lang-name{font-size:13px;font-weight:700;color:var(--brown);}
 .lang-native{font-size:11px;color:var(--sage-dark);}
 
-/* ─── SCANNER ─── */
+/* ─── VOICE BUTTON ─── */
+.voice-btn{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#E8D5F5,#D4A8F0);border:2px solid #C084E8;border-radius:50px;padding:10px 18px;font-family:'Quicksand',sans-serif;font-weight:700;font-size:13px;color:#6B21A8;cursor:pointer;transition:all .25s var(--bounce);box-shadow:0 4px 14px rgba(192,132,232,.3);width:100%;justify-content:center;flex-shrink:0;}
+
+/* ─── STEP TIMER ─── */
+.step-timer{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#EEF6FF,#DBEAFE);border:2px solid #93C5FD;border-radius:var(--rs);padding:10px 14px;flex-shrink:0;}
+.timer-display{font-size:26px;font-weight:800;color:#1D4ED8;font-variant-numeric:tabular-nums;min-width:52px;}
+.timer-controls{display:flex;flex-direction:column;gap:4px;flex:1;}
+.timer-label{font-size:10px;font-weight:700;color:#3B82F6;text-transform:uppercase;letter-spacing:.8px;}
+.timer-btns{display:flex;gap:6px;}
+.timer-btn{border:none;border-radius:50px;padding:5px 12px;font-family:'Quicksand',sans-serif;font-weight:700;font-size:12px;cursor:pointer;transition:all .2s var(--bounce);}
+.timer-btn-start{background:#3B82F6;color:white;}
+.timer-btn-start:hover{background:#2563EB;transform:scale(1.05);}
+.timer-btn-reset{background:#EFF6FF;color:#3B82F6;border:1.5px solid #93C5FD;}
+.timer-btn-reset:hover{transform:scale(1.05);}
+.timer-done .timer-display{color:#16A34A;animation:timerPulse .6s ease-in-out 3;}
+@keyframes timerPulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* ─── WORD VOICE ─── */
+.word-pill{position:relative;}
+.word-speak-btn{position:absolute;top:5px;right:7px;background:rgba(255,255,255,.32);border:none;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;transition:all .2s var(--bounce);padding:0;line-height:1;}
+.word-speak-btn:hover{background:rgba(255,255,255,.6);transform:scale(1.2);}
+.word-speak-btn.speaking{animation:wSpeakPulse .45s ease-in-out infinite alternate;}
+@keyframes wSpeakPulse{from{transform:scale(1);}to{transform:scale(1.3);}}
+.voice-btn:hover{transform:scale(1.03);box-shadow:0 6px 20px rgba(192,132,232,.45);}
+.voice-btn:active{transform:scale(.97);}
+.voice-btn.loading{opacity:.7;cursor:wait;}
+.voice-btn.playing{background:linear-gradient(135deg,#D4F5E0,#A8E8C0);border-color:#4ADE80;color:#166534;box-shadow:0 4px 14px rgba(74,222,128,.3);}
+.voice-btn.error{background:linear-gradient(135deg,#FFE5E5,#FFB0B0);border-color:#F87171;color:#991B1B;box-shadow:none;}
+.voice-icon{font-size:16px;line-height:1;}
+.voice-waves{display:flex;align-items:center;gap:2px;height:16px;}
+.voice-waves span{display:block;width:3px;background:#4ADE80;border-radius:2px;animation:waveAnim .8s ease-in-out infinite;}
+.voice-waves span:nth-child(1){animation-delay:0s;}
+.voice-waves span:nth-child(2){animation-delay:.15s;}
+.voice-waves span:nth-child(3){animation-delay:.3s;}
+.voice-waves span:nth-child(4){animation-delay:.15s;}
+@keyframes waveAnim{0%,100%{height:4px;}50%{height:14px;}}
+
 #screen-scanner{padding-top:72px;gap:14px;padding-bottom:32px;}
 
 .camera-wrap{position:relative;border-radius:var(--r);overflow:hidden;background:#1a1a1a;flex-shrink:0;height:300px;box-shadow:var(--shadow-lg);}
@@ -377,6 +413,21 @@ body{font-family:'Quicksand',sans-serif;background:#e8e4d0;min-height:100vh;disp
         <span id="p-safety-txt">Supervised</span>
       </div>
       <div class="p-nutr" id="p-nutr"></div>
+      <!-- STEP TIMER -->
+      <div class="step-timer" id="step-timer">
+        <div class="timer-display" id="timer-display">2:00</div>
+        <div class="timer-controls">
+          <div class="timer-label" id="timer-label">⏱ Suggested time</div>
+          <div class="timer-btns">
+            <button class="timer-btn timer-btn-start" id="timer-start-btn" onclick="toggleTimer()">▶ Start</button>
+            <button class="timer-btn timer-btn-reset" onclick="resetTimer()">↺ Reset</button>
+          </div>
+        </div>
+      </div>
+      <button class="voice-btn" id="voice-btn" onclick="speakStep()">
+        <span class="voice-icon">🎙️</span>
+        <span id="voice-btn-label">Read this step aloud</span>
+      </button>
     </div>
 
     <div class="k-chef">
@@ -388,15 +439,17 @@ body{font-family:'Quicksand',sans-serif;background:#e8e4d0;min-height:100vh;disp
         <div class="m-title-row"><span id="m-title">Mission</span><span id="m-check">⬜</span></div>
         <div class="m-txt" id="m-txt">Loading…</div>
       </div>
-      <div class="word-pill wp-ing">
+      <div class="word-pill wp-ing" onclick="speakWord('ing')">
         <div class="w-en" id="wp-en-i"></div>
         <div class="w-py" id="wp-py-i" style="display:none"></div>
         <div class="w-tgt" id="wp-tgt-i"></div>
+        <button class="word-speak-btn" id="word-speak-ing" onclick="event.stopPropagation();speakWord('ing')">🔊</button>
       </div>
-      <div class="word-pill wp-verb">
+      <div class="word-pill wp-verb" onclick="speakWord('verb')">
         <div class="w-en" id="wp-en-v"></div>
         <div class="w-py" id="wp-py-v" style="display:none"></div>
         <div class="w-tgt" id="wp-tgt-v"></div>
+        <button class="word-speak-btn" id="word-speak-verb" onclick="event.stopPropagation();speakWord('verb')">🔊</button>
       </div>
     </div>
   </div>
@@ -487,102 +540,102 @@ const PRODUCE = {
 const RECIPES = {
   tomato:[
     {id:'tom-b',meal:'Breakfast',name:'Tomato Egg Scramble',emoji:'🍳',time:'10 min',age:'3+',steps:[
-      {p:'Crack 2 eggs into a bowl and whisk with a fork. Chop 1 small tomato into small pieces.',m:'Watch carefully! Can you count the tomato pieces?',mt:'👀 Count the pieces',verb:'count',safety:'adult',stxt:'Adult cracks eggs & chops',nutr:'Eggs + tomato = complete protein and Vitamin C — a great morning combo!'},
-      {p:'Heat a non-stick pan on low. Add a small pat of butter and let it melt gently.',m:'Can you smell the butter? What does it smell like?',mt:'👃 Sniff & describe',verb:'cook',safety:'adult',stxt:'Adult handles the hot pan',nutr:'Low heat keeps eggs soft and fluffy — and preserves more nutrients.'},
+      {p:'Crack 2 eggs into a bowl and whisk with a fork. Chop 1 small tomato into small pieces.',m:'Watch carefully! Can you count the tomato pieces?',mt:'👀 Count the pieces',verb:'count',safety:'adult',stxt:'Adult cracks eggs & chops',timer:45,nutr:'Eggs + tomato = complete protein and Vitamin C — a great morning combo!'},
+      {p:'Heat a non-stick pan on low. Add a small pat of butter and let it melt gently.',m:'Can you smell the butter? What does it smell like?',mt:'👃 Sniff & describe',verb:'cook',safety:'adult',stxt:'Adult handles the hot pan',timer:120,nutr:'Low heat keeps eggs soft and fluffy — and preserves more nutrients.'},
       {p:'Pour eggs in. Let sit 20 seconds, then push gently with a spatula.',m:'Watch the eggs change colour! Tell your grown-up what you see.',mt:'🔍 Spot the change',verb:'mix',safety:'adult',stxt:'Adult stirs on the hob',nutr:"Eggs are among the best sources of choline — essential for children's brain development!"},
-      {p:'Add tomato pieces just before eggs finish. Stir once, remove from heat immediately.',m:'Sprinkle the tomato pieces in! Count to 3 as you do it.',mt:'🍅 Add the tomatoes',verb:'place',safety:'child',stxt:'Child can add tomatoes safely',nutr:'Adding tomatoes off the heat keeps their Vitamin C intact — heat destroys it quickly.'},
+      {p:'Add tomato pieces just before eggs finish. Stir once, remove from heat immediately.',m:'Sprinkle the tomato pieces in! Count to 3 as you do it.',mt:'🍅 Add the tomatoes',verb:'place',safety:'child',stxt:'Child can add tomatoes safely',timer:30,nutr:'Adding tomatoes off the heat keeps their Vitamin C intact — heat destroys it quickly.'},
     ]},
     {id:'tom-l',meal:'Lunch',name:'Tomato Caprese Salad',emoji:'🥗',time:'8 min',age:'2+',steps:[
-      {p:'Wash 3 ripe tomatoes under cool water for 20 seconds, rubbing the surface gently.',m:'Rub the tomato under the water. Count to 20!',mt:'💦 Wash & count',verb:'wash',safety:'child',stxt:'Great child task!',nutr:'Washing removes surface residues — always wash produce even if you plan to peel it.'},
-      {p:'Slice tomatoes into rounds about 1 cm thick. Slice fresh mozzarella the same way if using.',m:'Point to each tomato slice and count them!',mt:'🔢 Count the slices',verb:'count',safety:'adult',stxt:'Adult handles the knife',nutr:'Mozzarella adds calcium and protein — a perfect nutritional pairing with tomatoes.'},
-      {p:'Alternate tomato and mozzarella slices on a plate. Tuck fresh basil between each pair.',m:"Lay the basil leaves in between — like tucking them in to sleep!",mt:'🌿 Tuck the basil',verb:'place',safety:'child',stxt:'Child can arrange safely',nutr:'Fresh basil is rich in Vitamin K and adds antioxidant flavonoids.'},
-      {p:'Drizzle with olive oil and a small pinch of salt. Serve at room temperature.',m:'Drizzle the olive oil in a big circle! Count 1, 2, 3 drizzles.',mt:'🫒 Drizzle time!',verb:'mix',safety:'child',stxt:'Supervised pouring',nutr:'Olive oil boosts absorption of fat-soluble lycopene from tomatoes — a perfect pairing!'},
+      {p:'Wash 3 ripe tomatoes under cool water for 20 seconds, rubbing the surface gently.',m:'Rub the tomato under the water. Count to 20!',mt:'💦 Wash & count',verb:'wash',safety:'child',stxt:'Great child task!',timer:30,nutr:'Washing removes surface residues — always wash produce even if you plan to peel it.'},
+      {p:'Slice tomatoes into rounds about 1 cm thick. Slice fresh mozzarella the same way if using.',m:'Point to each tomato slice and count them!',mt:'🔢 Count the slices',verb:'count',safety:'adult',stxt:'Adult handles the knife',timer:45,nutr:'Mozzarella adds calcium and protein — a perfect nutritional pairing with tomatoes.'},
+      {p:'Alternate tomato and mozzarella slices on a plate. Tuck fresh basil between each pair.',m:"Lay the basil leaves in between — like tucking them in to sleep!",mt:'🌿 Tuck the basil',verb:'place',safety:'child',stxt:'Child can arrange safely',timer:30,nutr:'Fresh basil is rich in Vitamin K and adds antioxidant flavonoids.'},
+      {p:'Drizzle with olive oil and a small pinch of salt. Serve at room temperature.',m:'Drizzle the olive oil in a big circle! Count 1, 2, 3 drizzles.',mt:'🫒 Drizzle time!',verb:'mix',safety:'child',stxt:'Supervised pouring',timer:60,nutr:'Olive oil boosts absorption of fat-soluble lycopene from tomatoes — a perfect pairing!'},
     ]},
     {id:'tom-d',meal:'Dinner',name:'Simple Tomato Pasta',emoji:'🍝',time:'20 min',age:'3+',steps:[
-      {p:'Bring a pot of salted water to a boil. Cook pasta per package directions.',m:'Watch the bubbles! Are they big or tiny?',mt:'🫧 Bubble watch',verb:'cook',safety:'adult',stxt:'Adult handles boiling water',nutr:'Whole-wheat pasta adds extra fiber and B vitamins compared to white pasta.'},
-      {p:'While pasta cooks, dice 4 tomatoes finely. Mince a small garlic clove if using.',m:'How many tomato pieces? Challenge: count past 10!',mt:'🔢 Big count challenge',verb:'count',safety:'adult',stxt:'Adult chops and minces',nutr:'Garlic contains allicin — a natural compound that supports immune health.'},
-      {p:'Warm olive oil in a pan. Add tomatoes, a pinch of salt and sugar. Cook 8 minutes.',m:'Can you smell the sauce? Describe the smell to your grown-up!',mt:'👃 Sauce smell test',verb:'cook',safety:'adult',stxt:'Adult handles the hot pan',nutr:'Cooking tomatoes for 8+ minutes significantly boosts lycopene absorption!'},
-      {p:'Drain pasta and toss with sauce. Top with a little grated parmesan if desired.',m:'Sprinkle the cheese! Count how many shakes you make.',mt:'🧀 Cheese sprinkle!',verb:'place',safety:'child',stxt:'Child can sprinkle safely',nutr:'Parmesan adds calcium and a rich umami depth — a little goes a long way.'},
+      {p:'Bring a pot of salted water to a boil. Cook pasta per package directions.',m:'Watch the bubbles! Are they big or tiny?',mt:'🫧 Bubble watch',verb:'cook',safety:'adult',stxt:'Adult handles boiling water',timer:120,nutr:'Whole-wheat pasta adds extra fiber and B vitamins compared to white pasta.'},
+      {p:'While pasta cooks, dice 4 tomatoes finely. Mince a small garlic clove if using.',m:'How many tomato pieces? Challenge: count past 10!',mt:'🔢 Big count challenge',verb:'count',safety:'adult',stxt:'Adult chops and minces',timer:45,nutr:'Garlic contains allicin — a natural compound that supports immune health.'},
+      {p:'Warm olive oil in a pan. Add tomatoes, a pinch of salt and sugar. Cook 8 minutes.',m:'Can you smell the sauce? Describe the smell to your grown-up!',mt:'👃 Sauce smell test',verb:'cook',safety:'adult',stxt:'Adult handles the hot pan',timer:120,nutr:'Cooking tomatoes for 8+ minutes significantly boosts lycopene absorption!'},
+      {p:'Drain pasta and toss with sauce. Top with a little grated parmesan if desired.',m:'Sprinkle the cheese! Count how many shakes you make.',mt:'🧀 Cheese sprinkle!',verb:'place',safety:'child',stxt:'Child can sprinkle safely',timer:30,nutr:'Parmesan adds calcium and a rich umami depth — a little goes a long way.'},
     ]},
   ],
   carrot:[
     {id:'car-b',meal:'Breakfast',name:'Carrot Oat Pancakes',emoji:'🥞',time:'15 min',age:'3+',steps:[
-      {p:'Grate 1 medium carrot on the large holes of a box grater. Set aside.',m:'Watch the carrot disappear into tiny pieces! What colour do you see?',mt:'🔍 Colour watch',verb:'wash',safety:'adult',stxt:'Adult uses the grater',nutr:'Grating carrots breaks cells, unlocking more beta-carotene than eating them whole.'},
-      {p:'Mix 1 cup oats, 1 egg, ½ cup milk, 1 tsp honey, and the grated carrot in a bowl.',m:'Stir 10 big circles! Count each stir out loud.',mt:'🥄 Stir & count',verb:'mix',safety:'child',stxt:'Child can stir safely',nutr:'Oats provide slow-release energy — keeping kids fuller for longer all morning.'},
-      {p:'Spoon batter in small rounds onto a non-stick pan on medium-low. Cook 2–3 mins per side.',m:'Look for tiny bubbles on top — that means flip time! Can you spot them?',mt:'🫧 Bubble spotter',verb:'cook',safety:'adult',stxt:'Adult flips pancakes',nutr:'Egg binds everything and adds complete protein, making this a balanced meal.'},
-      {p:'Stack and serve with a drizzle of honey or a dollop of yogurt.',m:'Stack the pancakes — how high can the tower go? Count each one!',mt:'🥞 Stack the tower',verb:'place',safety:'child',stxt:'Child can stack safely',nutr:'Yogurt topping adds probiotics and calcium — great for gut and bone health.'},
+      {p:'Grate 1 medium carrot on the large holes of a box grater. Set aside.',m:'Watch the carrot disappear into tiny pieces! What colour do you see?',mt:'🔍 Colour watch',verb:'wash',safety:'adult',stxt:'Adult uses the grater',timer:30,nutr:'Grating carrots breaks cells, unlocking more beta-carotene than eating them whole.'},
+      {p:'Mix 1 cup oats, 1 egg, ½ cup milk, 1 tsp honey, and the grated carrot in a bowl.',m:'Stir 10 big circles! Count each stir out loud.',mt:'🥄 Stir & count',verb:'mix',safety:'child',stxt:'Child can stir safely',timer:60,nutr:'Oats provide slow-release energy — keeping kids fuller for longer all morning.'},
+      {p:'Spoon batter in small rounds onto a non-stick pan on medium-low. Cook 2–3 mins per side.',m:'Look for tiny bubbles on top — that means flip time! Can you spot them?',mt:'🫧 Bubble spotter',verb:'cook',safety:'adult',stxt:'Adult flips pancakes',timer:120,nutr:'Egg binds everything and adds complete protein, making this a balanced meal.'},
+      {p:'Stack and serve with a drizzle of honey or a dollop of yogurt.',m:'Stack the pancakes — how high can the tower go? Count each one!',mt:'🥞 Stack the tower',verb:'place',safety:'child',stxt:'Child can stack safely',timer:30,nutr:'Yogurt topping adds probiotics and calcium — great for gut and bone health.'},
     ]},
     {id:'car-l',meal:'Lunch',name:'Carrot & Hummus Wraps',emoji:'🌯',time:'10 min',age:'2+',steps:[
-      {p:'Wash 3 carrots. An adult peels and cuts them into long sticks about 1 cm wide.',m:'Feel the carrot before and after washing — can you notice the difference?',mt:'🖐️ Touch & feel',verb:'wash',safety:'adult',stxt:'Adult peels and cuts',nutr:'The outer carrot layer holds extra nutrients — always rinse thoroughly!'},
-      {p:'Spread a generous layer of hummus on a whole-wheat wrap.',m:'Spread the hummus with a spoon in big swirls! Make a pattern.',mt:'🎨 Swirl & spread',verb:'mix',safety:'child',stxt:'Child can spread safely',nutr:'Hummus is made from chickpeas — packed with plant protein and healthy fats.'},
-      {p:'Lay carrot sticks across the middle. Add cucumber or spinach if you like.',m:'Line up the sticks side by side. How many fit? Count them!',mt:'🥕 Line them up',verb:'count',safety:'child',stxt:'Child can arrange safely',nutr:'Adding multiple coloured vegetables means more varied nutrients — eat the rainbow!'},
-      {p:'Roll the wrap tightly, cut in half diagonally, and serve with extra hummus for dipping.',m:'Dip a carrot stick in the hummus! How does it taste?',mt:'😋 Taste & describe',verb:'place',safety:'child',stxt:'Child can dip safely',nutr:'Pairing carrots with olive-oil-based hummus boosts Vitamin A absorption.'},
+      {p:'Wash 3 carrots. An adult peels and cuts them into long sticks about 1 cm wide.',m:'Feel the carrot before and after washing — can you notice the difference?',mt:'🖐️ Touch & feel',verb:'wash',safety:'adult',stxt:'Adult peels and cuts',timer:30,nutr:'The outer carrot layer holds extra nutrients — always rinse thoroughly!'},
+      {p:'Spread a generous layer of hummus on a whole-wheat wrap.',m:'Spread the hummus with a spoon in big swirls! Make a pattern.',mt:'🎨 Swirl & spread',verb:'mix',safety:'child',stxt:'Child can spread safely',timer:60,nutr:'Hummus is made from chickpeas — packed with plant protein and healthy fats.'},
+      {p:'Lay carrot sticks across the middle. Add cucumber or spinach if you like.',m:'Line up the sticks side by side. How many fit? Count them!',mt:'🥕 Line them up',verb:'count',safety:'child',stxt:'Child can arrange safely',timer:45,nutr:'Adding multiple coloured vegetables means more varied nutrients — eat the rainbow!'},
+      {p:'Roll the wrap tightly, cut in half diagonally, and serve with extra hummus for dipping.',m:'Dip a carrot stick in the hummus! How does it taste?',mt:'😋 Taste & describe',verb:'place',safety:'child',stxt:'Child can dip safely',timer:30,nutr:'Pairing carrots with olive-oil-based hummus boosts Vitamin A absorption.'},
     ]},
     {id:'car-d',meal:'Dinner',name:'Honey-Roasted Carrots',emoji:'🫚',time:'35 min',age:'3+',steps:[
-      {p:'Preheat oven to 200°C / 400°F. Wash, peel and cut carrots into equal batons.',m:'Sort the batons by size — big, medium, small!',mt:'📏 Sort by size',verb:'count',safety:'adult',stxt:'Adult uses oven and knife',nutr:'Roasting concentrates natural sugars — making vegetables sweeter and more appealing!'},
-      {p:'Toss carrots in a bowl with 1 tbsp olive oil, 1 tsp honey, salt and thyme.',m:'Toss the carrots! Count 10 big tosses.',mt:'🥗 Toss & coat',verb:'mix',safety:'child',stxt:'Child can toss in bowl',nutr:'Olive oil is needed to absorb fat-soluble Vitamin A from the carrots.'},
-      {p:'Spread in a single layer on a baking tray. Roast 25 minutes, turning halfway.',m:'Peek through the oven glass! Are they going golden yet?',mt:'🔍 Oven watching',verb:'cook',safety:'adult',stxt:'Adult handles the hot oven',nutr:'Golden edges form caramelised natural sugars — a wholesome treat!'},
-      {p:'Cool 5 minutes, then plate as a side dish.',m:'Arrange the carrots in a pretty pattern — a rainbow or a star! ⭐',mt:'⭐ Make a pattern',verb:'place',safety:'child',stxt:'Supervised plating',nutr:'Letting food cool slightly makes it safer and lets the flavours develop fully.'},
+      {p:'Preheat oven to 200°C / 400°F. Wash, peel and cut carrots into equal batons.',m:'Sort the batons by size — big, medium, small!',mt:'📏 Sort by size',verb:'count',safety:'adult',stxt:'Adult uses oven and knife',timer:45,nutr:'Roasting concentrates natural sugars — making vegetables sweeter and more appealing!'},
+      {p:'Toss carrots in a bowl with 1 tbsp olive oil, 1 tsp honey, salt and thyme.',m:'Toss the carrots! Count 10 big tosses.',mt:'🥗 Toss & coat',verb:'mix',safety:'child',stxt:'Child can toss in bowl',timer:60,nutr:'Olive oil is needed to absorb fat-soluble Vitamin A from the carrots.'},
+      {p:'Spread in a single layer on a baking tray. Roast 25 minutes, turning halfway.',m:'Peek through the oven glass! Are they going golden yet?',mt:'🔍 Oven watching',verb:'cook',safety:'adult',stxt:'Adult handles the hot oven',timer:120,nutr:'Golden edges form caramelised natural sugars — a wholesome treat!'},
+      {p:'Cool 5 minutes, then plate as a side dish.',m:'Arrange the carrots in a pretty pattern — a rainbow or a star! ⭐',mt:'⭐ Make a pattern',verb:'place',safety:'child',stxt:'Supervised plating',timer:30,nutr:'Letting food cool slightly makes it safer and lets the flavours develop fully.'},
     ]},
   ],
   apple:[
     {id:'app-b',meal:'Breakfast',name:'Cinnamon Apple Oatmeal',emoji:'🍲',time:'12 min',age:'2+',steps:[
-      {p:'Peel and core 1 apple. Dice into small 1 cm pieces and set aside.',m:'Watch the apple turn into little squares! Count as many as you can.',mt:'🔢 Count the cubes',verb:'count',safety:'adult',stxt:'Adult peels, cores and cuts',nutr:'Apple skins hold quercetin — a powerful plant antioxidant. Keep skin on when safe.'},
-      {p:'Cook 1 cup rolled oats with 2 cups water or milk on medium heat, stirring occasionally.',m:'Stir the oats — 5 clockwise, then 5 the other way!',mt:'🌀 Stir circles',verb:'mix',safety:'adult',stxt:'Adult stirs on hot hob',nutr:'Oats are rich in beta-glucan fiber — shown to support healthy cholesterol levels.'},
-      {p:'When oats are nearly done, add apple pieces, a pinch of cinnamon and 1 tsp honey.',m:'Sprinkle the cinnamon! How many shakes to turn the oats brown?',mt:'🟤 Colour change',verb:'mix',safety:'child',stxt:'Child can add cinnamon',nutr:'Cinnamon has anti-inflammatory properties — and makes everything smell wonderful!'},
-      {p:'Serve in bowls. Top with extra apple, raisins or a drizzle of honey.',m:'Add your toppings and make a smiley face! 😊',mt:'😊 Face art',verb:'place',safety:'child',stxt:'Child can decorate',nutr:'Raisins are a concentrated source of iron and quick energy — great in small amounts.'},
+      {p:'Peel and core 1 apple. Dice into small 1 cm pieces and set aside.',m:'Watch the apple turn into little squares! Count as many as you can.',mt:'🔢 Count the cubes',verb:'count',safety:'adult',stxt:'Adult peels, cores and cuts',timer:45,nutr:'Apple skins hold quercetin — a powerful plant antioxidant. Keep skin on when safe.'},
+      {p:'Cook 1 cup rolled oats with 2 cups water or milk on medium heat, stirring occasionally.',m:'Stir the oats — 5 clockwise, then 5 the other way!',mt:'🌀 Stir circles',verb:'mix',safety:'adult',stxt:'Adult stirs on hot hob',timer:60,nutr:'Oats are rich in beta-glucan fiber — shown to support healthy cholesterol levels.'},
+      {p:'When oats are nearly done, add apple pieces, a pinch of cinnamon and 1 tsp honey.',m:'Sprinkle the cinnamon! How many shakes to turn the oats brown?',mt:'🟤 Colour change',verb:'mix',safety:'child',stxt:'Child can add cinnamon',timer:60,nutr:'Cinnamon has anti-inflammatory properties — and makes everything smell wonderful!'},
+      {p:'Serve in bowls. Top with extra apple, raisins or a drizzle of honey.',m:'Add your toppings and make a smiley face! 😊',mt:'😊 Face art',verb:'place',safety:'child',stxt:'Child can decorate',timer:30,nutr:'Raisins are a concentrated source of iron and quick energy — great in small amounts.'},
     ]},
     {id:'app-l',meal:'Lunch',name:'Apple & Cheese Snack Plate',emoji:'🍱',time:'5 min',age:'2+',steps:[
-      {p:'Wash 2 apples under cold water for 30 seconds. Dry with a clean cloth.',m:'Rub the apple under water with both hands. Count to 30!',mt:'💦 Wash & count',verb:'wash',safety:'child',stxt:'Great child task!',nutr:'Always wash apples — the skin is nutritious and eating it is encouraged.'},
-      {p:'Slice apples into wedges. Remove core and any seeds completely.',m:'Count all the wedges! How many did one apple make?',mt:'🍎 Count the wedges',verb:'count',safety:'adult',stxt:'Adult handles knife and core',nutr:'Apple seeds contain amygdalin — always remove them fully, especially for children.'},
-      {p:'Squeeze a few drops of lemon juice over the slices to keep them bright.',m:'Squeeze the lemon over the bowl — watch the juice fall like rain!',mt:'🍋 Lemon rain!',verb:'mix',safety:'child',stxt:'Supervised squeezing',nutr:'Vitamin C in lemon prevents browning AND adds extra nutrients. Smart kitchen trick!'},
-      {p:'Arrange apple slices on a plate with cubes of mild cheddar.',m:'Make a sunshine pattern — apples in a circle, cheese in the middle! ☀️',mt:'☀️ Sunshine plate',verb:'place',safety:'child',stxt:'Child can arrange safely',nutr:'Apple + cheese = fiber + calcium + protein. A perfectly balanced snack!'},
+      {p:'Wash 2 apples under cold water for 30 seconds. Dry with a clean cloth.',m:'Rub the apple under water with both hands. Count to 30!',mt:'💦 Wash & count',verb:'wash',safety:'child',stxt:'Great child task!',timer:30,nutr:'Always wash apples — the skin is nutritious and eating it is encouraged.'},
+      {p:'Slice apples into wedges. Remove core and any seeds completely.',m:'Count all the wedges! How many did one apple make?',mt:'🍎 Count the wedges',verb:'count',safety:'adult',stxt:'Adult handles knife and core',timer:45,nutr:'Apple seeds contain amygdalin — always remove them fully, especially for children.'},
+      {p:'Squeeze a few drops of lemon juice over the slices to keep them bright.',m:'Squeeze the lemon over the bowl — watch the juice fall like rain!',mt:'🍋 Lemon rain!',verb:'mix',safety:'child',stxt:'Supervised squeezing',timer:60,nutr:'Vitamin C in lemon prevents browning AND adds extra nutrients. Smart kitchen trick!'},
+      {p:'Arrange apple slices on a plate with cubes of mild cheddar.',m:'Make a sunshine pattern — apples in a circle, cheese in the middle! ☀️',mt:'☀️ Sunshine plate',verb:'place',safety:'child',stxt:'Child can arrange safely',timer:30,nutr:'Apple + cheese = fiber + calcium + protein. A perfectly balanced snack!'},
     ]},
     {id:'app-d',meal:'Dinner',name:'Apple-Glazed Chicken',emoji:'🍗',time:'30 min',age:'5+',steps:[
-      {p:'Dice 1 apple small. Mix with juice of ½ lemon, 1 tbsp honey, pinch of cinnamon.',m:'Count the apple cubes! Find the biggest and smallest ones.',mt:'🔢 Compare sizes',verb:'count',safety:'adult',stxt:'Adult chops and juices',nutr:'Natural apple sugars caramelise during cooking — no refined sugar glaze needed!'},
-      {p:'Season 2 chicken breasts with salt and pepper. Heat oil in a pan on medium-high.',m:'Can you smell the pepper? What does it smell like to you?',mt:'👃 Smell test',verb:'cook',safety:'adult',stxt:'Adult handles raw chicken',nutr:'Always cook chicken to 74°C / 165°F internal temperature for food safety.'},
-      {p:'Sear chicken 4 minutes each side. Add glaze, reduce heat, cover, cook 8 more minutes.',m:'Watch the glaze bubble and turn golden! What colour is it?',mt:'🔍 Golden watch',verb:'cook',safety:'adult',stxt:'Adult handles hot pan',nutr:'Searing locks in moisture — giving juicy chicken rather than dry meat.'},
-      {p:'Rest 3 minutes. Slice and serve with vegetables or rice. Spoon extra glaze on top.',m:'Help pour the extra glaze on top! Count to 3 as you pour.',mt:'✨ Glaze drizzle!',verb:'place',safety:'child',stxt:'Supervised pouring',nutr:'Resting meat lets juices redistribute — never skip this step for best texture!'},
+      {p:'Dice 1 apple small. Mix with juice of ½ lemon, 1 tbsp honey, pinch of cinnamon.',m:'Count the apple cubes! Find the biggest and smallest ones.',mt:'🔢 Compare sizes',verb:'count',safety:'adult',stxt:'Adult chops and juices',timer:45,nutr:'Natural apple sugars caramelise during cooking — no refined sugar glaze needed!'},
+      {p:'Season 2 chicken breasts with salt and pepper. Heat oil in a pan on medium-high.',m:'Can you smell the pepper? What does it smell like to you?',mt:'👃 Smell test',verb:'cook',safety:'adult',stxt:'Adult handles raw chicken',timer:120,nutr:'Always cook chicken to 74°C / 165°F internal temperature for food safety.'},
+      {p:'Sear chicken 4 minutes each side. Add glaze, reduce heat, cover, cook 8 more minutes.',m:'Watch the glaze bubble and turn golden! What colour is it?',mt:'🔍 Golden watch',verb:'cook',safety:'adult',stxt:'Adult handles hot pan',timer:120,nutr:'Searing locks in moisture — giving juicy chicken rather than dry meat.'},
+      {p:'Rest 3 minutes. Slice and serve with vegetables or rice. Spoon extra glaze on top.',m:'Help pour the extra glaze on top! Count to 3 as you pour.',mt:'✨ Glaze drizzle!',verb:'place',safety:'child',stxt:'Supervised pouring',timer:30,nutr:'Resting meat lets juices redistribute — never skip this step for best texture!'},
     ]},
   ],
   banana:[
     {id:'ban-b',meal:'Breakfast',name:'Banana Smoothie Bowl',emoji:'🍌',time:'8 min',age:'2+',steps:[
-      {p:'Peel 2 ripe bananas and break into chunks. Freeze for 30 min for a thicker texture.',m:'Peel the banana and break it into 4 pieces! Count the chunks.',mt:'🍌 Peel & break',verb:'count',safety:'child',stxt:'Child can peel safely',nutr:'Riper, spottier bananas are sweeter and easier to digest — great for little tummies.'},
-      {p:'Blend frozen banana with 3 tbsp yogurt until thick and creamy. No sugar needed.',m:'Listen to the blender! Does the sound change when you add the banana?',mt:'👂 Listening game',verb:'mix',safety:'adult',stxt:'Adult uses the blender',nutr:'Frozen banana + yogurt = ice-cream-like texture with zero added sugar!'},
-      {p:'Pour into a bowl. It should be thick enough for toppings to sit on top.',m:"Tip the bowl gently — does it move like water or stay put?",mt:'🔍 Thick or runny?',verb:'place',safety:'child',stxt:'Child can pour with help',nutr:'Banana is rich in Vitamin B6 — important for brain development and mood regulation.'},
-      {p:'Top with sliced banana, granola, berries and a drizzle of honey. Serve immediately.',m:'Add your toppings and make a funny face! 😄',mt:'😄 Toppings face!',verb:'place',safety:'child',stxt:'Child can top safely',nutr:'Granola adds complex carbs and crunch — choose low-sugar varieties for children.'},
+      {p:'Peel 2 ripe bananas and break into chunks. Freeze for 30 min for a thicker texture.',m:'Peel the banana and break it into 4 pieces! Count the chunks.',mt:'🍌 Peel & break',verb:'count',safety:'child',stxt:'Child can peel safely',timer:45,nutr:'Riper, spottier bananas are sweeter and easier to digest — great for little tummies.'},
+      {p:'Blend frozen banana with 3 tbsp yogurt until thick and creamy. No sugar needed.',m:'Listen to the blender! Does the sound change when you add the banana?',mt:'👂 Listening game',verb:'mix',safety:'adult',stxt:'Adult uses the blender',timer:60,nutr:'Frozen banana + yogurt = ice-cream-like texture with zero added sugar!'},
+      {p:'Pour into a bowl. It should be thick enough for toppings to sit on top.',m:"Tip the bowl gently — does it move like water or stay put?",mt:'🔍 Thick or runny?',verb:'place',safety:'child',stxt:'Child can pour with help',timer:30,nutr:'Banana is rich in Vitamin B6 — important for brain development and mood regulation.'},
+      {p:'Top with sliced banana, granola, berries and a drizzle of honey. Serve immediately.',m:'Add your toppings and make a funny face! 😄',mt:'😄 Toppings face!',verb:'place',safety:'child',stxt:'Child can top safely',timer:30,nutr:'Granola adds complex carbs and crunch — choose low-sugar varieties for children.'},
     ]},
   ],
   spinach:[
     {id:'spi-b',meal:'Breakfast',name:'Spinach Green Scrambled Eggs',emoji:'🍳',time:'12 min',age:'3+',steps:[
-      {p:'Wash a large handful of baby spinach. Shake dry or pat with a clean towel.',m:'Shake the spinach like maracas over the sink! Count 10 big shakes.',mt:'🌿 Shake the greens',verb:'wash',safety:'child',stxt:'Great child task!',nutr:'Spinach is one of the most iron-dense vegetables — critical for growing children.'},
-      {p:'Crack 3 eggs and whisk with a fork. Season lightly with salt and pepper.',m:'Whisk as fast as you can! Count to 20 while whisking.',mt:'🥚 Whisk race!',verb:'mix',safety:'adult',stxt:'Adult cracks eggs',nutr:'Egg yolks contain choline — an essential nutrient for brain and nervous system health.'},
-      {p:'Heat oil in a pan. Add spinach, stir until just wilted (1 min). Pour eggs over.',m:'Watch the spinach get smaller as it heats — where does it go?!',mt:'🔍 Shrinking spinach',verb:'cook',safety:'adult',stxt:'Adult handles hot pan',nutr:'Wilting briefly preserves more nutrients than long cooking — quick is better here!'},
-      {p:'Scramble gently until just set. Remove from heat while still slightly soft.',m:'The eggs are ready when they look like soft fluffy clouds. 🌤️',mt:'☁️ Cloud eggs!',verb:'mix',safety:'adult',stxt:'Adult removes from heat',nutr:'Pair with lemon juice to double spinach iron absorption — a smart kitchen trick!'},
+      {p:'Wash a large handful of baby spinach. Shake dry or pat with a clean towel.',m:'Shake the spinach like maracas over the sink! Count 10 big shakes.',mt:'🌿 Shake the greens',verb:'wash',safety:'child',stxt:'Great child task!',timer:30,nutr:'Spinach is one of the most iron-dense vegetables — critical for growing children.'},
+      {p:'Crack 3 eggs and whisk with a fork. Season lightly with salt and pepper.',m:'Whisk as fast as you can! Count to 20 while whisking.',mt:'🥚 Whisk race!',verb:'mix',safety:'adult',stxt:'Adult cracks eggs',timer:60,nutr:'Egg yolks contain choline — an essential nutrient for brain and nervous system health.'},
+      {p:'Heat oil in a pan. Add spinach, stir until just wilted (1 min). Pour eggs over.',m:'Watch the spinach get smaller as it heats — where does it go?!',mt:'🔍 Shrinking spinach',verb:'cook',safety:'adult',stxt:'Adult handles hot pan',timer:120,nutr:'Wilting briefly preserves more nutrients than long cooking — quick is better here!'},
+      {p:'Scramble gently until just set. Remove from heat while still slightly soft.',m:'The eggs are ready when they look like soft fluffy clouds. 🌤️',mt:'☁️ Cloud eggs!',verb:'mix',safety:'adult',stxt:'Adult removes from heat',timer:60,nutr:'Pair with lemon juice to double spinach iron absorption — a smart kitchen trick!'},
     ]},
   ],
   broccoli:[
     {id:'bro-l',meal:'Lunch',name:'Broccoli Cheese Bites',emoji:'🥦',time:'18 min',age:'3+',steps:[
-      {p:'Wash a broccoli head. Break into small florets, roughly the same size.',m:'Break broccoli into tiny trees! How many little trees do you have?',mt:'🌳 Count the trees',verb:'wash',safety:'child',stxt:'Child can break florets',nutr:'Broccoli has more Vitamin C per gram than an orange — a true nutrition superstar!'},
-      {p:'Steam florets 4 minutes until bright green and just tender. Drain and cool.',m:'Watch it turn BRIGHT green! What colour was it before?',mt:'🎨 Colour change',verb:'cook',safety:'adult',stxt:'Adult handles steam',nutr:'Exactly 4 minutes steaming preserves the most Vitamin C and sulforaphane.'},
-      {p:'Mix cooled broccoli with 1 egg, 4 tbsp breadcrumbs, 3 tbsp grated cheddar, pinch salt.',m:'Mash with a fork — lumpy is perfect, not smooth!',mt:'🔨 Mash time!',verb:'mix',safety:'child',stxt:'Child can mash safely',nutr:'Cheddar adds calcium and fat to help absorb fat-soluble Vitamins A and K from broccoli.'},
-      {p:'Form into patties. Bake at 200°C / 400°F for 12 minutes, flipping halfway.',m:'Shape a patty with your hands — circle, star or heart?',mt:'❤️ Shape making!',verb:'place',safety:'adult',stxt:'Adult handles oven',nutr:'Baking keeps these bites light — much less saturated fat than frying.'},
+      {p:'Wash a broccoli head. Break into small florets, roughly the same size.',m:'Break broccoli into tiny trees! How many little trees do you have?',mt:'🌳 Count the trees',verb:'wash',safety:'child',stxt:'Child can break florets',timer:30,nutr:'Broccoli has more Vitamin C per gram than an orange — a true nutrition superstar!'},
+      {p:'Steam florets 4 minutes until bright green and just tender. Drain and cool.',m:'Watch it turn BRIGHT green! What colour was it before?',mt:'🎨 Colour change',verb:'cook',safety:'adult',stxt:'Adult handles steam',timer:120,nutr:'Exactly 4 minutes steaming preserves the most Vitamin C and sulforaphane.'},
+      {p:'Mix cooled broccoli with 1 egg, 4 tbsp breadcrumbs, 3 tbsp grated cheddar, pinch salt.',m:'Mash with a fork — lumpy is perfect, not smooth!',mt:'🔨 Mash time!',verb:'mix',safety:'child',stxt:'Child can mash safely',timer:60,nutr:'Cheddar adds calcium and fat to help absorb fat-soluble Vitamins A and K from broccoli.'},
+      {p:'Form into patties. Bake at 200°C / 400°F for 12 minutes, flipping halfway.',m:'Shape a patty with your hands — circle, star or heart?',mt:'❤️ Shape making!',verb:'place',safety:'adult',stxt:'Adult handles oven',timer:30,nutr:'Baking keeps these bites light — much less saturated fat than frying.'},
     ]},
   ],
   corn:[
     {id:'cor-l',meal:'Lunch',name:'Corn & Avocado Salsa',emoji:'🫙',time:'10 min',age:'2+',steps:[
-      {p:'Drain and rinse canned corn well. (If fresh, adult cuts kernels from the cob.)',m:'Stir the corn 20 times! Count every stir.',mt:'🌽 Stir & count',verb:'wash',safety:'adult',stxt:'Adult opens can or cuts cob',nutr:'Corn gives both soluble and insoluble fiber — great for a healthy digestive system.'},
-      {p:'Dice 1 ripe avocado into small cubes. Juice ½ lime.',m:'Look inside the avocado — what colour is it?',mt:'🔍 Inside check',verb:'count',safety:'adult',stxt:'Adult handles knife and avocado pit',nutr:'Avocado provides healthy fats essential for brain development in children.'},
-      {p:'Combine corn, avocado and lime juice in a bowl. Fold gently with a spoon.',m:'Fold gently — like tucking in a blanket! Count 5 gentle folds.',mt:'🛏️ Gentle folding',verb:'mix',safety:'child',stxt:'Child can fold gently',nutr:'Lime juice Vitamin C boosts iron absorption from the corn — a smart pairing!'},
-      {p:'Season to taste. Serve with tortilla chips or as a topping for rice or chicken.',m:'Taste a tiny bit on a chip! Can you taste the lime? The corn?',mt:'😋 Taste test!',verb:'place',safety:'child',stxt:'Child can taste safely',nutr:'Use low-salt chips for children where possible — the salsa has plenty of flavour.'},
+      {p:'Drain and rinse canned corn well. (If fresh, adult cuts kernels from the cob.)',m:'Stir the corn 20 times! Count every stir.',mt:'🌽 Stir & count',verb:'wash',safety:'adult',stxt:'Adult opens can or cuts cob',timer:30,nutr:'Corn gives both soluble and insoluble fiber — great for a healthy digestive system.'},
+      {p:'Dice 1 ripe avocado into small cubes. Juice ½ lime.',m:'Look inside the avocado — what colour is it?',mt:'🔍 Inside check',verb:'count',safety:'adult',stxt:'Adult handles knife and avocado pit',timer:45,nutr:'Avocado provides healthy fats essential for brain development in children.'},
+      {p:'Combine corn, avocado and lime juice in a bowl. Fold gently with a spoon.',m:'Fold gently — like tucking in a blanket! Count 5 gentle folds.',mt:'🛏️ Gentle folding',verb:'mix',safety:'child',stxt:'Child can fold gently',timer:60,nutr:'Lime juice Vitamin C boosts iron absorption from the corn — a smart pairing!'},
+      {p:'Season to taste. Serve with tortilla chips or as a topping for rice or chicken.',m:'Taste a tiny bit on a chip! Can you taste the lime? The corn?',mt:'😋 Taste test!',verb:'place',safety:'child',stxt:'Child can taste safely',timer:30,nutr:'Use low-salt chips for children where possible — the salsa has plenty of flavour.'},
     ]},
   ],
   cucumber:[
     {id:'cuc-l',meal:'Lunch',name:'Cucumber Ribbon Salad',emoji:'🥗',time:'8 min',age:'2+',steps:[
-      {p:'Wash 2 cucumbers under cold running water, scrubbing the skin gently.',m:'Scrub the cucumber under the water — how does the skin feel?',mt:'🖐️ Texture check',verb:'wash',safety:'child',stxt:'Great child task!',nutr:'Cucumber skin contains Vitamin K and silica — keep it on for extra nutrition.'},
+      {p:'Wash 2 cucumbers under cold running water, scrubbing the skin gently.',m:'Scrub the cucumber under the water — how does the skin feel?',mt:'🖐️ Texture check',verb:'wash',safety:'child',stxt:'Great child task!',timer:30,nutr:'Cucumber skin contains Vitamin K and silica — keep it on for extra nutrition.'},
       {p:'Use a vegetable peeler to create long ribbon strips down the length of the cucumber.',m:'Count each ribbon as it curls off! How many do you make?',mt:'🎀 Count the ribbons',verb:'count',safety:'adult',stxt:'Adult uses the peeler for ribbons',nutr:"Cucumbers are 96% water — one of the most hydrating foods you can eat!"},
-      {p:'Toss ribbons in a bowl with 1 tsp rice vinegar, ½ tsp sesame oil, pinch salt and sesame seeds.',m:'Toss the ribbons gently! Count 10 big tosses.',mt:'🌀 10 tosses!',verb:'mix',safety:'child',stxt:'Child can toss in bowl',nutr:'Sesame seeds add calcium, zinc and healthy fats to this simple salad.'},
-      {p:"Arrange on a plate, garnish with sesame seeds and serve chilled.",m:"Arrange the ribbons like a bird's nest! 🐣",mt:'🐣 Nest building!',verb:'place',safety:'child',stxt:'Child can arrange safely',nutr:'Chilling cucumber preserves the crunch and maximises that refreshing taste!'},
+      {p:'Toss ribbons in a bowl with 1 tsp rice vinegar, ½ tsp sesame oil, pinch salt and sesame seeds.',m:'Toss the ribbons gently! Count 10 big tosses.',mt:'🌀 10 tosses!',verb:'mix',safety:'child',stxt:'Child can toss in bowl',timer:60,nutr:'Sesame seeds add calcium, zinc and healthy fats to this simple salad.'},
+      {p:"Arrange on a plate, garnish with sesame seeds and serve chilled.",m:"Arrange the ribbons like a bird's nest! 🐣",mt:'🐣 Nest building!',verb:'place',safety:'child',stxt:'Child can arrange safely',timer:30,nutr:'Chilling cucumber preserves the crunch and maximises that refreshing taste!'},
     ]},
   ],
 };
@@ -809,7 +862,262 @@ function renderKStep(){
   nb.innerHTML=S.step===kSteps.length-1
     ?`Finish! <i data-lucide="star" style="width:17px;height:17px"></i>`
     :`Next Step <i data-lucide="chevron-right" style="width:17px;height:17px"></i>`;
+
+  // Reset voice button and timer for new step
+  setVoiceBtn('idle');
+  initTimer(step.timer || 60);
   initIcons();
+}
+
+/* ══════════════════════════════════════════
+   VOICE — ELEVENLABS TTS
+   Voice: "Rachel" (warm, friendly, clear)
+   Voice ID: 21m00Tcm4TlvDq8ikWAM
+══════════════════════════════════════════ */
+const VOICE_ID = 'FUfBrNit0NNZAwb58KWH';
+const EL_KEY = 'sk_9107f5fddd76b284558422565705e203c8ae29393b08b5ae';
+let currentAudio = null;
+let isPlaying = false;
+
+function getApiKey(){ return EL_KEY; }
+function saveApiKey(){}
+
+function setVoiceBtn(state, msg){
+  const btn = document.getElementById('voice-btn');
+  const lbl = document.getElementById('voice-btn-label');
+  btn.className = 'voice-btn';
+  if(state === 'idle'){
+    btn.innerHTML = `<span class="voice-icon">🎙️</span><span>Read this step aloud</span>`;
+  } else if(state === 'loading'){
+    btn.classList.add('loading');
+    btn.innerHTML = `<span class="voice-icon">⏳</span><span>Preparing voice…</span>`;
+  } else if(state === 'playing'){
+    btn.classList.add('playing');
+    btn.innerHTML = `<div class="voice-waves"><span></span><span></span><span></span><span></span></div><span>Playing… (tap to stop)</span>`;
+  } else if(state === 'error'){
+    btn.classList.add('error');
+    btn.innerHTML = `<span class="voice-icon">⚠️</span><span>${msg||'Try again'}</span>`;
+    setTimeout(()=>setVoiceBtn('idle'), 3000);
+  }
+}
+
+async function speakStep(){
+  // If already playing, stop it
+  if(isPlaying){
+    if(currentAudio){ currentAudio.pause(); currentAudio=null; }
+    speechSynthesis.cancel();
+    isPlaying=false;
+    setVoiceBtn('idle');
+    return;
+  }
+
+  const step=kSteps[S.step];
+  if(!step) return;
+
+  const info=PRODUCE[S.ingredient]||PRODUCE.tomato;
+  const safetyNote=step.safety==='adult'
+    ?'This step needs you — please keep little hands away from this one.'
+    :step.safety==='supervised'
+    ?'You can do this together with your little chef nearby.'
+    :'Great news — your little chef can help with this one!';
+
+  const text=`Step ${S.step+1}. ${step.p} ${safetyNote}`;
+
+  setVoiceBtn('loading');
+
+  // XMLHttpRequest works from file:// where fetch is blocked
+  const xhr=new XMLHttpRequest();
+  xhr.open('POST',`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`);
+  xhr.setRequestHeader('xi-api-key', EL_KEY);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.setRequestHeader('Accept','audio/mpeg');
+  xhr.responseType='blob';
+
+  xhr.onload=()=>{
+    if(xhr.status===200){
+      const url=URL.createObjectURL(xhr.response);
+      currentAudio=new Audio(url);
+      isPlaying=true;
+      setVoiceBtn('playing');
+      currentAudio.onended=()=>{
+        isPlaying=false; currentAudio=null;
+        URL.revokeObjectURL(url);
+        setVoiceBtn('idle');
+      };
+      currentAudio.onerror=()=>{
+        isPlaying=false; setVoiceBtn('idle');
+      };
+      currentAudio.play();
+    } else {
+      console.warn('ElevenLabs status:',xhr.status);
+      fallbackTTS(text);
+    }
+  };
+
+  xhr.onerror=()=>{
+    console.warn('ElevenLabs unreachable, using browser TTS');
+    fallbackTTS(text);
+  };
+
+  xhr.send(JSON.stringify({
+    text,
+    model_id:'eleven_turbo_v2',
+    voice_settings:{stability:0.55,similarity_boost:0.85,style:0.3,use_speaker_boost:true},
+  }));
+}
+
+function fallbackTTS(text){
+  const utter=new SpeechSynthesisUtterance(text);
+  utter.rate=0.92; utter.pitch=1.05; utter.lang='en-US';
+  const voices=speechSynthesis.getVoices();
+  const warm=voices.find(v=>v.name.includes('Samantha')||v.name.includes('Karen')||v.name.includes('Moira')||v.lang==='en-US');
+  if(warm) utter.voice=warm;
+  utter.onstart=()=>{isPlaying=true; setVoiceBtn('playing');};
+  utter.onend=()=>{isPlaying=false; setVoiceBtn('idle');};
+  utter.onerror=()=>{isPlaying=false; setVoiceBtn('idle');};
+  isPlaying=true;
+  setVoiceBtn('playing');
+  speechSynthesis.speak(utter);
+}
+
+/* ══ TIMER ══ */
+let timerSecs = 0;
+let timerRemain = 0;
+let timerRunning = false;
+let timerInterval = null;
+
+function initTimer(secs){
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerRunning = false;
+  timerSecs = secs;
+  timerRemain = secs;
+  renderTimerDisplay();
+  const btn = document.getElementById('timer-start-btn');
+  if(btn){ btn.textContent = '▶ Start'; }
+  const wrap = document.getElementById('step-timer');
+  if(wrap) wrap.classList.remove('timer-done');
+}
+
+function renderTimerDisplay(){
+  const m = Math.floor(timerRemain / 60);
+  const s = timerRemain % 60;
+  const el = document.getElementById('timer-display');
+  if(el) el.textContent = m + ':' + String(s).padStart(2,'0');
+}
+
+function toggleTimer(){
+  if(timerRunning){
+    clearInterval(timerInterval);
+    timerInterval = null;
+    timerRunning = false;
+    document.getElementById('timer-start-btn').textContent = '▶ Resume';
+  } else {
+    if(timerRemain <= 0) resetTimer();
+    timerRunning = true;
+    document.getElementById('timer-start-btn').textContent = '⏸ Pause';
+    timerInterval = setInterval(()=>{
+      timerRemain--;
+      renderTimerDisplay();
+      if(timerRemain <= 0){
+        clearInterval(timerInterval);
+        timerRunning = false;
+        document.getElementById('timer-start-btn').textContent = '✓ Done!';
+        document.getElementById('step-timer').classList.add('timer-done');
+        // Play a gentle done chime
+        try{
+          const ctx = new (window.AudioContext||window.webkitAudioContext)();
+          [523,659,784].forEach((freq,i)=>{
+            const o=ctx.createOscillator(), g=ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.frequency.value=freq; o.type='sine';
+            g.gain.setValueAtTime(0,ctx.currentTime+i*0.18);
+            g.gain.linearRampToValueAtTime(0.18,ctx.currentTime+i*0.18+0.05);
+            g.gain.linearRampToValueAtTime(0,ctx.currentTime+i*0.18+0.35);
+            o.start(ctx.currentTime+i*0.18);
+            o.stop(ctx.currentTime+i*0.18+0.4);
+          });
+        } catch(e){}
+      }
+    },1000);
+  }
+}
+
+function resetTimer(){
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerRunning = false;
+  timerRemain = timerSecs;
+  renderTimerDisplay();
+  document.getElementById('timer-start-btn').textContent = '▶ Start';
+  document.getElementById('step-timer').classList.remove('timer-done');
+}
+
+/* ══ WORD VOICEOVER ══ */
+let wordAudio = null;
+
+function speakWord(which){
+  const step = kSteps[S.step];
+  const ld = LANG[S.lang]||LANG.es;
+  const info = PRODUCE[S.ingredient]||PRODUCE.tomato;
+  const we = ld.words[S.ingredient]||{w:info.name,p:null};
+  const ve = ld.verbs[step.verb]||ld.verbs.wash;
+
+  const wordObj = which==='ing' ? we : ve;
+  const text = wordObj.w;
+  const btnId = which==='ing' ? 'word-speak-ing' : 'word-speak-verb';
+  const btn = document.getElementById(btnId);
+
+  if(!text) return;
+
+  // Stop any existing word audio
+  if(wordAudio){ wordAudio.pause(); wordAudio=null; }
+  document.querySelectorAll('.word-speak-btn').forEach(b=>b.classList.remove('speaking'));
+
+  btn.classList.add('speaking');
+  btn.textContent = '🔉';
+
+  const done = ()=>{ btn.classList.remove('speaking'); btn.textContent='🔊'; wordAudio=null; };
+
+  // Try ElevenLabs first
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`);
+  xhr.setRequestHeader('xi-api-key', EL_KEY);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.setRequestHeader('Accept','audio/mpeg');
+  xhr.responseType = 'blob';
+  xhr.onload = ()=>{
+    if(xhr.status===200){
+      const url = URL.createObjectURL(xhr.response);
+      wordAudio = new Audio(url);
+      wordAudio.onended = ()=>{ URL.revokeObjectURL(url); done(); };
+      wordAudio.onerror = done;
+      wordAudio.play();
+    } else { fallbackWordTTS(text, done); }
+  };
+  xhr.onerror = ()=> fallbackWordTTS(text, done);
+  xhr.send(JSON.stringify({
+    text,
+    model_id:'eleven_turbo_v2',
+    voice_settings:{stability:0.6,similarity_boost:0.85,style:0.2,use_speaker_boost:true},
+  }));
+}
+
+function fallbackWordTTS(text, done){
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 0.8; utter.pitch = 1.1; utter.lang = 'en-US';
+  utter.onend = done; utter.onerror = done;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
+}
+
+function stopVoice(){
+  if(currentAudio){ currentAudio.pause(); currentAudio=null; }
+  if(wordAudio){ wordAudio.pause(); wordAudio=null; }
+  speechSynthesis.cancel();
+  isPlaying=false;
+  setVoiceBtn('idle');
+  document.querySelectorAll('.word-speak-btn').forEach(b=>{b.classList.remove('speaking');b.textContent='🔊';});
 }
 
 function completeMission(){
@@ -838,10 +1146,14 @@ function showCelebration(){
 function closePopup(){document.getElementById('popup-ov').classList.remove('show');}
 
 function nextKStep(){
+  stopVoice();
+  clearInterval(timerInterval); timerRunning=false;
   if(S.step<kSteps.length-1){S.step++;renderKStep();}
   else showComplete();
 }
 function prevKStep(){
+  stopVoice();
+  clearInterval(timerInterval); timerRunning=false;
   if(S.step>0){S.step--;renderKStep();}
   else showScreen('explore');
 }
@@ -902,6 +1214,8 @@ function goBack(){
 
 function goHome(){
   stopCamera();
+  stopVoice();
+  clearInterval(timerInterval); timerRunning=false;
   Object.assign(S,{ingredient:null,recipe:null,step:0,missionDone:false,learnedWords:[],history:['welcome'],_pendingScan:null});
   document.getElementById('id-card').classList.remove('show');
   showScreen('welcome');
