@@ -312,6 +312,8 @@ body{font-family:'Nunito',sans-serif;background:radial-gradient(ellipse at 30% 2
 }
 .step-bi-col{padding:10px 14px;}
 .step-bi-col:first-child{border-right:2px dashed var(--cream2);}
+.step-bi-col:has(.step-bi-sentence:empty){ display:none; }
+.step-bi-text:has(.step-bi-col:only-child){ grid-template-columns:1fr; }
 .step-bi-flag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;opacity:.5;color:var(--brown);margin-bottom:4px;}
 .step-bi-sentence{font-size:13px;font-weight:700;color:var(--brown);line-height:1.45;}
 
@@ -611,6 +613,24 @@ body{font-family:'Nunito',sans-serif;background:radial-gradient(ellipse at 30% 2
 .vm-em-big  { font-size:40px !important; }
 .vm-tap-hint{ font-size:11px;color:#8B5CF6;font-weight:700;margin-top:3px; }
 .vm-diff    { font-size:9px;opacity:.4;margin-top:2px; }
+
+/* ── LANGUAGE MODE TOGGLE ── */
+#lang-mode-toggle{
+  display:flex;align-items:center;background:var(--cream2);
+  border-radius:50px;padding:3px;gap:2px;
+  border:2px solid var(--peach);
+}
+.lmt-btn{
+  border:none;background:none;border-radius:50px;
+  padding:4px 9px;font-size:11px;font-weight:800;color:var(--brown);
+  cursor:pointer;transition:all .18s var(--bounce);white-space:nowrap;
+  opacity:.55;
+}
+.lmt-btn.active{
+  background:linear-gradient(135deg,var(--peach),var(--peach-d));
+  color:white;opacity:1;
+  box-shadow:0 2px 8px rgba(255,179,71,.4);
+}
 </style>
 </head>
 <body>
@@ -620,10 +640,10 @@ body{font-family:'Nunito',sans-serif;background:radial-gradient(ellipse at 30% 2
   <!-- TOP NAV -->
   <div id="top-nav">
     <button class="nav-back" onclick="goBack()">← Back</button>
-    <div style="display:flex;align-items:center;gap:6px;">
-      <span id="nav-bi-flag-p" style="font-size:18px;"></span>
-      <span style="font-size:12px;font-weight:800;color:var(--brown);opacity:.5;">+</span>
-      <span id="nav-bi-flag-c" style="font-size:18px;"></span>
+    <div id="lang-mode-toggle">
+      <button class="lmt-btn" id="lmt-p" onclick="setLangMode('parent')" title="Parent language only"></button>
+      <button class="lmt-btn active" id="lmt-both" onclick="setLangMode('both')" title="Both languages">Both</button>
+      <button class="lmt-btn" id="lmt-c" onclick="setLangMode('child')" title="Child language only"></button>
     </div>
     <button class="nav-home" onclick="goHome()" title="Home">🏠</button>
   </div>
@@ -673,7 +693,7 @@ body{font-family:'Nunito',sans-serif;background:radial-gradient(ellipse at 30% 2
       <div class="browse-header">
         <div class="chico-wrap" style="flex-direction:row;align-items:center;gap:10px;justify-content:center;">
           <div style="width:52px;height:58px;flex-shrink:0;" id="browse-chico"></div>
-          <div class="chico-bubble" style="max-width:200px;font-size:12px;" id="browse-bubble">Pick an ingredient to start cooking!</div>
+          <div class="chico-bubble" style="max-width:200px;font-size:12px;" id="browse-bubble"></div>
         </div>
         <div class="browse-title" id="browse-title" style="margin-top:10px;"></div>
       </div>
@@ -2202,6 +2222,7 @@ const S = {
   cLang: null,    // child language code
   role: null,     // 'parent' | 'child'
   activeLang: 'parent', // which lang is currently displayed
+  langMode: 'both',      // 'parent' | 'both' | 'child'
   ing: null,      // selected ingredient id
   recipe: null,   // selected recipe object
   step: 0,
@@ -2219,10 +2240,65 @@ let wordAudio = null;
 /* ════════════════════════════════════════════════════════
    HELPERS
 ════════════════════════════════════════════════════════ */
-function t(obj){ return obj[S.pLang] || obj['en'] || obj; }
-function ct(obj){ return obj[S.cLang] || obj['en'] || obj; }
-function ui(key){ return (UI[S.pLang]||UI.en)[key] || (UI.en)[key] || key; }
-function cui(key){ return (UI[S.cLang]||UI.en)[key] || (UI.en)[key] || key; }
+// ── LANGUAGE RESOLVER — single source of truth ──
+// langMode: 'parent' | 'both' | 'child'
+function t(obj){
+  // Primary display language
+  if(!obj || typeof obj !== 'object') return obj || '';
+  if(S.langMode === 'child') return obj[S.cLang] || obj.en || '';
+  return obj[S.pLang] || obj.en || '';
+}
+function ct(obj){
+  // Secondary display language (suppressed in single-lang modes)
+  if(!obj || typeof obj !== 'object') return '';
+  if(S.langMode !== 'both') return ''; // single lang = no secondary
+  return obj[S.cLang] || obj.en || '';
+}
+function ui(key){
+  // UI strings in primary language
+  const lang = (S.langMode==='child') ? S.cLang : S.pLang;
+  return (UI[lang]||UI.en)[key] || UI.en[key] || key;
+}
+function cui(key){ return (UI[S.cLang]||UI.en)[key] || UI.en[key] || key; }
+
+// Resolves active language code (what t() uses)
+function activeLangCode(){ return S.langMode==='child' ? S.cLang : S.pLang; }
+
+function setLangMode(mode){
+  S.langMode = mode;
+  updateLangModeToggle();
+  // Re-render whichever screen is currently active
+  const active = document.querySelector('.screen.active');
+  if(!active) return;
+  const id = active.id;
+  if(id === 'screen-kitchen')  { renderStep(); }
+  else if(id === 'screen-browse')   { buildBrowse(); }
+  else if(id === 'screen-recipes')  { buildRecipes(); }
+  else if(id === 'screen-recap')    { buildRecap(); }
+}
+
+function updateLangModeToggle(){
+  const pLang = S.pLang || 'en';
+  const cLang = S.cLang || 'en';
+  const pFlag = (LANGS[pLang]||LANGS.en).flag;
+  const cFlag = (LANGS[cLang]||LANGS.en).flag;
+  const btnP = document.getElementById('lmt-p');
+  const btnB = document.getElementById('lmt-both');
+  const btnC = document.getElementById('lmt-c');
+  if(btnP) btnP.textContent = pFlag + ' ' + (LANGS[pLang]||LANGS.en).name;
+  if(btnB) btnB.textContent = 'Both';
+  if(btnC) btnC.textContent = (LANGS[cLang]||LANGS.en).name + ' ' + cFlag;
+  ['lmt-p','lmt-both','lmt-c'].forEach(id => {
+    const b = document.getElementById(id);
+    if(b) b.classList.remove('active');
+  });
+  const activeId = S.langMode==='parent'?'lmt-p':S.langMode==='child'?'lmt-c':'lmt-both';
+  const ab = document.getElementById(activeId);
+  if(ab) ab.classList.add('active');
+  // Hide/show the toggle when no langs chosen yet
+  const toggle = document.getElementById('lang-mode-toggle');
+  if(toggle) toggle.style.opacity = (S.pLang && S.cLang) ? '1' : '0.3';
+}
 
 function showScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -2233,10 +2309,7 @@ function showScreen(name){
   else {
     nav.classList.add('visible');
     // show both lang flags
-    const pf=document.getElementById('nav-bi-flag-p');
-    const cf=document.getElementById('nav-bi-flag-c');
-    if(pf && S.pLang) pf.textContent=(LANGS[S.pLang]||LANGS.en).flag;
-    if(cf && S.cLang) cf.textContent=(LANGS[S.cLang]||LANGS.en).flag;
+    updateLangModeToggle();
   }
   document.getElementById('scroll-root').scrollTop=0;
   if(S.history[S.history.length-1]!==name) S.history.push(name);
@@ -2257,7 +2330,7 @@ function goHome(){
     // Show a personalised greeting
     const name = S.childName ? S.childName + ', what' : 'What';
     const bubble = document.getElementById('browse-bubble');
-    if(bubble) bubble.textContent = name + ' shall we cook next? 🍳';
+    if(bubble) bubble.textContent = (name ? name + ', ' : '') + ui('chicoWelcome');
   } else {
     S.history=['welcome'];
     showScreen('welcome');
@@ -2319,6 +2392,7 @@ function selectCLang(code){
 function selectRole(r){ S.role=r; } // kept for compat
 function checkStartReady(){
   document.getElementById('start-btn').disabled=!(S.pLang&&S.cLang);
+  updateLangModeToggle();
 }
 
 /* ── NAME MODAL ── */
@@ -2424,6 +2498,9 @@ function buildBrowse(){
   document.getElementById('scan-title').textContent=ui('scan');
   document.getElementById('scan-sub').textContent=ui('scanSub');
   document.getElementById('ing-section-label').textContent=ui('ingLabel');
+  // Chico bubble in active language
+  const bb = document.getElementById('browse-bubble');
+  if(bb) bb.textContent = ui('chicoWelcome');
   renderIngGrid(document.getElementById('ing-grid'),Object.keys(ING));
 }
 function renderIngGrid(container, keys){
@@ -2436,7 +2513,7 @@ function renderIngGrid(container, keys){
     card.innerHTML=`
       <span class="ing-em">${ing.em}</span>
       <div class="ing-name-p">${t(ing.name)}</div>
-      <div class="ing-name-c">${ct(ing.name)}</div>
+      ${ct(ing.name)?'<div class="ing-name-c">'+ct(ing.name)+'</div>':''}
       <div class="ing-count">${recipeCount} recipe${recipeCount!==1?'s':''}</div>`;
     card.onclick=()=>{ S.ing=id; buildRecipes(); showScreen('recipes'); };
     container.appendChild(card);
@@ -2471,7 +2548,7 @@ function buildRecipes(){
     <span class="ing-hero-em">${ing.em}</span>
     <div class="ing-hero-info">
       <div class="ing-hero-name-p">${pn}</div>
-      <div class="ing-hero-name-c">${cn}</div>
+      ${cn?'<div class="ing-hero-name-c">'+cn+'</div>':''}
       <div class="ing-hero-desc">${t(ing.desc)}</div>
       <div class="nutr-chips">${ing.nutr.map(n=>`<span class="nutr-chip">${n}</span>`).join('')}</div>
     </div>`;
@@ -2487,7 +2564,7 @@ function buildRecipes(){
       <div class="recipe-card-body">
         <div class="meal-badge ${getMealClass(t(recipe.meal))}">${t(recipe.meal)}</div>
         <div class="recipe-name-p">${t(recipe.name)}</div>
-        <div class="recipe-name-c">${ct(recipe.name)}</div>
+        ${ct(recipe.name)?'<div class="recipe-name-c">'+ct(recipe.name)+'</div>':''}
         <div class="recipe-meta">
           <span class="recipe-meta-pill">⏱ ${recipe.time}</span>
           <span class="recipe-meta-pill">👶 ${recipe.age}</span>
@@ -3702,30 +3779,55 @@ function vmStateBadge(vocab_id){
   return '<span class="vm-badge new-word">🌱 New Word!</span>';
 }
 
-/* ── Announce newly unlocked words (called after mastering) ── */
+/* ── Mastery celebration + unlock announcement ── */
+/* Always fires on "Got it!" — consistent every time */
 function vmAnnounceUnlocked(newIds){
   if(!newIds || !newIds.length) return;
-  const names = newIds.slice(0,2).map(id => VOCAB_GRAPH[id]?.word_en || id).join(', ');
-  const toast = document.createElement('div');
-  toast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);'
-    + 'background:linear-gradient(135deg,#9B59B6,#7D3C98);color:white;'
-    + 'border-radius:50px;padding:12px 24px;font-family:Fredoka One,cursive;'
-    + 'font-size:15px;z-index:600;box-shadow:0 6px 20px rgba(155,89,182,.5);'
-    + 'white-space:nowrap;animation:chicoBounce .5s var(--bounce);pointer-events:none;';
-  toast.textContent = '🌟 New Word Alert! Unlocked: ' + names;
-  document.body.appendChild(toast);
-  setTimeout(()=>{ toast.style.opacity='0'; toast.style.transition='opacity .4s';
-    setTimeout(()=>toast.remove(),400); }, 3000);
-  launchConfetti(15);
+
+  // Build cards for each newly unlocked word (max 2)
+  const preview = newIds.slice(0,2).map(id => {
+    const node = VOCAB_GRAPH[id];
+    if(!node) return '';
+    const pWord = vmGetWord(node, S.pLang||'en');
+    const cWord = vmGetWord(node, S.cLang||'en');
+    return '<div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.15);border-radius:12px;padding:8px 12px;margin-top:8px;">'
+      + '<span style="font-size:28px;">' + node.em + '</span>'
+      + '<div><div style="font-weight:800;font-size:15px;">' + pWord + '</div>'
+      + (S.langMode!=='parent' ? '<div style="font-size:13px;opacity:.85;">' + cWord + '</div>' : '')
+      + '</div></div>';
+  }).join('');
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);'
+    + 'z-index:700;display:flex;align-items:center;justify-content:center;'
+    + 'animation:modalPop .3s var(--bounce);';
+
+  overlay.innerHTML = '<div style="background:linear-gradient(135deg,#7C3AED,#9B59B6);'
+    + 'color:white;border-radius:24px;padding:24px 22px;width:min(340px,85vw);'
+    + 'text-align:center;box-shadow:0 20px 60px rgba(124,58,237,.5);">'
+    + '<div style="font-size:40px;margin-bottom:6px;">🌟</div>'
+    + '<div style="font-family:Fredoka One,cursive;font-size:22px;margin-bottom:4px;">New Word' + (newIds.length>1?'s':'') + ' Unlocked!</div>'
+    + '<div style="font-size:13px;opacity:.8;margin-bottom:4px;">Chef Chico taught you something new!</div>'
+    + preview
+    + '<button onclick="this.parentNode.parentNode.remove()" '
+    + 'style="margin-top:16px;background:white;color:#7C3AED;border:none;border-radius:50px;'
+    + 'padding:10px 28px;font-family:Fredoka One,cursive;font-size:16px;cursor:pointer;'
+    + 'box-shadow:0 4px 14px rgba(0,0,0,.15);">Got it! 🎉</button>'
+    + '</div>';
+
+  document.body.appendChild(overlay);
+  // Auto-dismiss after 5s
+  setTimeout(()=>{ if(overlay.parentNode){ overlay.style.opacity='0'; overlay.style.transition='opacity .4s'; setTimeout(()=>overlay.remove(),400); } }, 5000);
+  launchConfetti(20);
 }
 
 /* ── Build word teach card HTML (3-state treatment) ── */
 function vmBuildWordCard(node, pillId){
   if(!node) return '';
-  const pLang = S.pLang||'en';
+  const pLang = S.pLang||'en'; // vocab cards always show parent lang
   const cLang = S.cLang||'en';
   const pWord = vmGetWord(node, pLang);
-  const cWord = vmGetWord(node, cLang);
+  const cWord = vmGetWord(node, cLang); // vocab always bilingual (not affected by toggle)
   const showPinyin = (cLang==='zhs'||cLang==='zht') && node.pinyin;
   const state = vmGetProfile(node.vocab_id).state;
   const seenCount = vmGetProfile(node.vocab_id).seen_count;
@@ -3805,10 +3907,8 @@ function vmGotIt(btn){
   spawnStarBurst(cx, cy, 'var(--green)', 8);
   launchConfetti(20);
 
-  // Announce newly unlocked words
-  if(newlyUnlocked && newlyUnlocked.length){
-    setTimeout(()=> vmAnnounceUnlocked(newlyUnlocked), 800);
-  }
+  // Always celebrate mastery — announce unlocked words (or show mastery-only card)
+  setTimeout(()=> vmCelebrateMastery(vid, newlyUnlocked), 700);
 }
 
 /* ── "Practice more!" handler ── */
@@ -3835,6 +3935,31 @@ function vmPractice(btn){
 /* ── Legacy compat shims (word-teach buttons still call these) ── */
 function wordTeachGotIt(btn){ vmGotIt(btn); }
 function wordTeachPractice(btn){ vmPractice(btn); }
+
+
+/* ── Mastery celebration (always fires on "Got it!") ── */
+function vmCelebrateMastery(vid, newIds){
+  const node = VOCAB_GRAPH[vid];
+  if(!node) return;
+  if(newIds && newIds.length){
+    // New words unlocked — show the full unlock modal
+    vmAnnounceUnlocked(newIds);
+  } else {
+    // No new unlocks — show a smaller consistent "⭐ Mastered!" toast
+    const pWord = vmGetWord(node, S.pLang||'en');
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;top:90px;left:50%;transform:translateX(-50%);'
+      + 'background:linear-gradient(135deg,#5CB85C,#3D8B3D);color:white;'
+      + 'border-radius:50px;padding:11px 24px;'
+      + 'font-family:Fredoka One,cursive;font-size:15px;z-index:600;'
+      + 'box-shadow:0 6px 20px rgba(92,184,92,.5);'
+      + 'animation:chicoBounce .5s var(--bounce);pointer-events:none;white-space:nowrap;';
+    toast.textContent = '⭐ ' + node.em + ' ' + pWord + ' — Mastered!';
+    document.body.appendChild(toast);
+    setTimeout(()=>{ toast.style.opacity='0'; toast.style.transition='opacity .4s';
+      setTimeout(()=>toast.remove(),400); }, 2500);
+  }
+}
 
 /* END VOCAB MASTERY ENGINE */
 
@@ -3927,16 +4052,16 @@ function renderStep(){
         <div class="verb-badge">${verbKey}</div>
       </div>
 
-      <!-- Bilingual instructions -->
-      <div class="step-bi-text">
-        <div class="step-bi-col">
-          <div class="step-bi-flag">${pLangInfo.flag} ${pLangInfo.name}</div>
+      <!-- Instructions: single or dual column based on langMode -->
+      <div class="step-bi-text" style="${S.langMode!=='both'?'grid-template-columns:1fr':''}">
+        <div class="step-bi-col" style="${S.langMode!=='both'?'border-right:none':''}">
+          <div class="step-bi-flag">${S.langMode==='child'?cLangInfo.flag+' '+cLangInfo.name:pLangInfo.flag+' '+pLangInfo.name}</div>
           <div class="step-bi-sentence">${pText}</div>
         </div>
-        <div class="step-bi-col">
+        ${S.langMode==='both'?`<div class="step-bi-col">
           <div class="step-bi-flag">${cLangInfo.flag} ${cLangInfo.name}</div>
           <div class="step-bi-sentence">${cText}</div>
-        </div>
+        </div>`:''}
       </div>
 
       <!-- Chef Chico — always inside the card -->
@@ -4076,7 +4201,7 @@ function buildRecap(){
       : '';
     card.innerHTML = '<span class="recap-em">'+w.em+'</span>'
       +'<div class="recap-word-p">'+w.pw+'</div>'
-      +'<div class="recap-word-c">'+w.cw+'</div>'
+      +(w.cw && w.cw!==w.pw ? '<div class="recap-word-c">'+w.cw+'</div>' : '')
       + pinyin + badge;
     card.dataset.pw=w.pw||'';
     card.dataset.cw=w.cw||'';
