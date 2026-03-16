@@ -3884,13 +3884,13 @@ function vmBuildWordCard(node, pillId){
 function vmGotIt(btn){
   const card = btn.closest('[data-vocab-id]');
   if(!card) return;
+  const pillId = card.id; // 'wt-ing' or 'wt-verb'
   const vid = card.dataset.vocabId;
 
   const newlyUnlocked = vmMarkMastered(vid);
-  // Remove from practice queue
   VM.practiceQueue = VM.practiceQueue.filter(id => id !== vid);
 
-  // Animate card
+  // Step 1: flash green mastered state on the card
   card.classList.remove('queued','vm-new-word');
   card.classList.add('grad');
   card.style.animation = 'vocabGotPop .45s var(--bounce)';
@@ -3907,8 +3907,60 @@ function vmGotIt(btn){
   spawnStarBurst(cx, cy, 'var(--green)', 8);
   launchConfetti(20);
 
-  // Always celebrate mastery — announce unlocked words (or show mastery-only card)
+  // Step 2: celebrate (toast or unlock modal)
   setTimeout(()=> vmCelebrateMastery(vid, newlyUnlocked), 700);
+
+  // Step 3: after celebration, replace card with next harder word
+  // Pick a harder word: prefer newly unlocked > higher difficulty > any unmastered
+  setTimeout(()=>{
+    const nextNode = vmPickNextHarder(vid);
+    if(!nextNode) return; // all words mastered — leave card as-is
+    const wrap = card.parentNode;
+    if(!wrap) return;
+    // Swap out the card with a fresh one for the new word
+    const newCardHtml = vmBuildWordCard(nextNode, pillId);
+    const tmp = document.createElement('div');
+    tmp.innerHTML = newCardHtml;
+    const newCard = tmp.firstElementChild;
+    if(!newCard) return;
+    newCard.style.animation = 'modalPop .4s var(--bounce)';
+    wrap.replaceChild(newCard, card);
+    // Auto-speak the new word if it's new
+    if(vmIsNew(nextNode.vocab_id)){
+      const pWord = vmGetWord(nextNode, S.pLang||'en');
+      const cWord = vmGetWord(nextNode, S.cLang||'en');
+      setTimeout(()=> speakBilingual(pWord, cWord, pillId), 400);
+    }
+  }, newlyUnlocked && newlyUnlocked.length ? 5500 : 2800); // wait for modal or toast
+}
+
+/* ── Pick the next harder word after mastering vid ── */
+function vmPickNextHarder(masteredVid){
+  const masteredNode = VOCAB_GRAPH[masteredVid];
+  const masteredDiff = masteredNode ? masteredNode.difficulty : 1;
+
+  // Priority 1: newly unlocked words from this mastery (direct graph children)
+  if(masteredNode){
+    for(const nid of masteredNode.unlocks){
+      const n = VOCAB_GRAPH[nid];
+      if(n && !vmIsMastered(n.vocab_id)) return n;
+    }
+  }
+
+  // Priority 2: any unlocked word with higher difficulty than what was just mastered
+  const harder = [...VM.unlocked]
+    .map(id => VOCAB_GRAPH[id])
+    .filter(n => n && !vmIsMastered(n.vocab_id) && n.difficulty > masteredDiff)
+    .sort((a,b) => a.difficulty - b.difficulty); // lowest harder first
+  if(harder.length) return harder[0];
+
+  // Priority 3: any unmastered unlocked word (same or lower difficulty)
+  const any = [...VM.unlocked]
+    .map(id => VOCAB_GRAPH[id])
+    .filter(n => n && !vmIsMastered(n.vocab_id));
+  if(any.length) return any[Math.floor(Math.random() * any.length)];
+
+  return null; // truly all mastered
 }
 
 /* ── "Practice more!" handler ── */
